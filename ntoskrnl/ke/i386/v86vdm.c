@@ -32,7 +32,6 @@ KiVdmDumpTrapFrame(_In_ PKTRAP_FRAME TrapFrame)
     ULONG FlatIp = (TrapFrame->SegCs << 4) + TrapFrame->Eip;
     UCHAR Bytes[8];
 
-
     DbgPrint("Trap information:\n");
 
     DbgPrint("Eip=%08x Esp=%08x Ebp=%08x EFlags=%08x ErrCode=%08x\n",
@@ -102,7 +101,7 @@ KiVdmUnhandledOpcode(IN PKTRAP_FRAME TrapFrame,
     Eip = (TrapFrame->SegCs << 4) + TrapFrame->Eip;
     Eip += KiVdmGetInstructionSize(Flags) - 1;
 
-    DPRINT1("Unhandled VDM Opcode 0x%2x @ 0x%08x\n", *(PUCHAR)Eip, Eip);
+    DPRINT1("Unhandled VDM Opcode 0x%02x @ 0x%08x\n", *(PUCHAR)Eip, Eip);
 
     KiVdmDumpTrapFrame(TrapFrame);
     UNIMPLEMENTED_DBGBREAK();
@@ -122,7 +121,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeINSB(IN PKTRAP_FRAME TrapFrame,
-             IN ULONG Flags)
+                IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -140,7 +139,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTSB(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                 IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -149,7 +148,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTSW(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                 IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -158,7 +157,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeNPX(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+               IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -176,7 +175,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeINBimm(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                  IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -185,7 +184,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeINWimm(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                  IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -194,7 +193,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTBimm(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                   IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -203,7 +202,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTWimm(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+                   IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -212,7 +211,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeINB(IN PKTRAP_FRAME TrapFrame,
-                   IN ULONG Flags)
+               IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -221,7 +220,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeINW(IN PKTRAP_FRAME TrapFrame,
-                   IN ULONG Flags)
+               IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -230,7 +229,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTB(IN PKTRAP_FRAME TrapFrame,
-                   IN ULONG Flags)
+                IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -239,7 +238,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeOUTW(IN PKTRAP_FRAME TrapFrame,
-                   IN ULONG Flags)
+                IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
@@ -248,7 +247,7 @@ static
 BOOLEAN
 FASTCALL
 KiVdmOpcodeHLT(IN PKTRAP_FRAME TrapFrame,
-                IN ULONG Flags)
+               IN ULONG Flags)
 {
     return KiVdmUnhandledOpcode(TrapFrame, Flags);
 }
