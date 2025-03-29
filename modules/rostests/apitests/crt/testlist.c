@@ -3,6 +3,8 @@
 #define STANDALONE
 #include <apitest.h>
 
+extern void func__mbsncmp(void);
+extern void func__mbsstr(void);
 #if defined(TEST_MSVCRT)
 extern void func__vscprintf(void);
 extern void func__vscwprintf(void);
@@ -30,15 +32,18 @@ extern void func__vsnprintf(void);
 extern void func__vsnwprintf(void);
 extern void func_mbstowcs(void);
 extern void func_mbtowc(void);
+extern void func_rand_s(void);
 extern void func_sprintf(void);
 extern void func_strcpy(void);
 extern void func_strlen(void);
 extern void func_strnlen(void);
 extern void func_strtoul(void);
+extern void func_system(void);
 extern void func_wcsnlen(void);
 extern void func_wcstombs(void);
 extern void func_wcstoul(void);
 extern void func_wctomb(void);
+extern void func__wsystem(void);
 extern void func___getmainargs(void);
 
 extern void func_static_construct(void);
@@ -57,6 +62,14 @@ const struct test winetest_testlist[] =
     { "strcpy", func_strcpy },
     { "strlen", func_strlen },
     { "strtoul", func_strtoul },
+#if defined(TEST_CRTDLL) || defined(TEST_MSVCRT)
+    { "_mbsncmp", func__mbsncmp },
+    { "_mbsstr", func__mbsstr },
+    { "system", func_system },
+#endif
+#if defined(TEST_MSVCRT)
+    { "_wsystem", func__wsystem },
+#endif
     { "wcstoul", func_wcstoul },
     { "wctomb", func_wctomb },
     { "wcstombs", func_wcstombs },
@@ -67,6 +80,7 @@ const struct test winetest_testlist[] =
     { "ceil", func_ceil },
     { "fabs", func_fabs },
     { "floor", func_floor },
+    { "rand_s", func_rand_s },
 #ifdef _M_AMD64 // x86 / arm need fixing
     { "fpcontrol", func_fpcontrol },
 #endif

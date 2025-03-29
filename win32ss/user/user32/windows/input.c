@@ -211,68 +211,45 @@ CliSaveImeHotKey(DWORD dwID, UINT uModifiers, UINT uVirtualKey, HKL hKL, BOOL bD
 {
     WCHAR szName[MAX_PATH];
     LONG error;
-    HKEY hControlPanel = NULL, hInputMethod = NULL, hHotKeys = NULL, hKey = NULL;
+    HKEY hKey;
     BOOL ret = FALSE, bRevertOnFailure = FALSE;
+
+    StringCchPrintfW(szName, _countof(szName),
+                     L"Control Panel\\Input Method\\Hot Keys\\%08lX", dwID);
 
     if (bDelete)
     {
-        StringCchPrintfW(szName, _countof(szName),
-                         L"Control Panel\\Input Method\\Hot Keys\\%08lX", dwID);
         error = RegDeleteKeyW(HKEY_CURRENT_USER, szName);
         return (error == ERROR_SUCCESS);
     }
 
-    // Open "Control Panel"
-    error = RegCreateKeyExW(HKEY_CURRENT_USER, L"Control Panel", 0, NULL, 0, KEY_ALL_ACCESS,
-                            NULL, &hControlPanel, NULL);
+    error = RegCreateKeyExW(HKEY_CURRENT_USER, szName, 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL);
     if (error == ERROR_SUCCESS)
     {
-        // Open "Input Method"
-        error = RegCreateKeyExW(hControlPanel, L"Input Method", 0, NULL, 0, KEY_ALL_ACCESS,
-                                NULL, &hInputMethod, NULL);
+        bRevertOnFailure = TRUE;
+
+        // Set "Virtual Key"
+        error = RegSetValueExW(hKey, L"Virtual Key", 0, REG_BINARY,
+                               (LPBYTE)&uVirtualKey, sizeof(uVirtualKey));
         if (error == ERROR_SUCCESS)
         {
-            // Open "Hot Keys"
-            error = RegCreateKeyExW(hInputMethod, L"Hot Keys", 0, NULL, 0, KEY_ALL_ACCESS,
-                                    NULL, &hHotKeys, NULL);
+            // Set "Key Modifiers"
+            error = RegSetValueExW(hKey, L"Key Modifiers", 0, REG_BINARY,
+                                   (LPBYTE)&uModifiers, sizeof(uModifiers));
             if (error == ERROR_SUCCESS)
             {
-                // Open "Key"
-                StringCchPrintfW(szName, _countof(szName), L"%08lX", dwID);
-                error = RegCreateKeyExW(hHotKeys, szName, 0, NULL, 0, KEY_ALL_ACCESS,
-                                        NULL, &hKey, NULL);
+                // Set "Target IME"
+                error = RegSetValueExW(hKey, L"Target IME", 0, REG_BINARY,
+                                       (LPBYTE)&hKL, sizeof(hKL));
                 if (error == ERROR_SUCCESS)
                 {
-                    bRevertOnFailure = TRUE;
-
-                    // Set "Virtual Key"
-                    error = RegSetValueExW(hKey, L"Virtual Key", 0, REG_BINARY,
-                                           (LPBYTE)&uVirtualKey, sizeof(uVirtualKey));
-                    if (error == ERROR_SUCCESS)
-                    {
-                        // Set "Key Modifiers"
-                        error = RegSetValueExW(hKey, L"Key Modifiers", 0, REG_BINARY,
-                                               (LPBYTE)&uModifiers, sizeof(uModifiers));
-                        if (error == ERROR_SUCCESS)
-                        {
-                            // Set "Target IME"
-                            error = RegSetValueExW(hKey, L"Target IME", 0, REG_BINARY,
-                                                   (LPBYTE)&hKL, sizeof(hKL));
-                            if (error == ERROR_SUCCESS)
-                            {
-                                // Success!
-                                ret = TRUE;
-                                bRevertOnFailure = FALSE;
-                            }
-                        }
-                    }
-                    RegCloseKey(hKey);
+                    // Success!
+                    ret = TRUE;
+                    bRevertOnFailure = FALSE;
                 }
-                RegCloseKey(hHotKeys);
             }
-            RegCloseKey(hInputMethod);
         }
-        RegCloseKey(hControlPanel);
+        RegCloseKey(hKey);
     }
 
     if (bRevertOnFailure)
@@ -704,7 +681,7 @@ LoadKeyboardLayoutA(LPCSTR pszKLID,
     return LoadKeyboardLayoutW(wszKLID, Flags);
 }
 
-inline BOOL IsValidKLID(_In_ LPCWSTR pwszKLID)
+static inline BOOL IsValidKLID(_In_ LPCWSTR pwszKLID)
 {
     return (pwszKLID != NULL) && (wcsspn(pwszKLID, L"0123456789ABCDEFabcdef") == (KL_NAMELENGTH - 1));
 }
@@ -721,9 +698,9 @@ VOID GetSystemLibraryPath(LPWSTR pszPath, INT cchPath, LPCWSTR pszFileName)
 /*
  * @unimplemented
  *
- * NOTE: We adopt a different design from Microsoft's one for security reason.
+ * NOTE: We adopt a different design from Microsoft's one due to security reason.
+ *       See NtUserLoadKeyboardLayoutEx.
  */
-/* Win: LoadKeyboardLayoutWorker */
 HKL APIENTRY
 IntLoadKeyboardLayout(
     _In_    HKL     hklUnload,
@@ -733,7 +710,6 @@ IntLoadKeyboardLayout(
     _In_    BOOL    unknown5)
 {
     DWORD dwKLID, dwHKL, dwType, dwSize;
-    UNICODE_STRING ustrKbdName;
     UNICODE_STRING ustrKLID;
     WCHAR wszRegKey[256] = L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\";
     WCHAR wszLayoutId[10], wszNewKLID[KL_NAMELENGTH], szImeFileName[80];
@@ -807,7 +783,7 @@ IntLoadKeyboardLayout(
                 szImeFileName[_countof(szImeFileName) - 1] = UNICODE_NULL;
                 GetSystemLibraryPath(szPath, _countof(szPath), szImeFileName);
 
-                /* We don't allow the invalid "IME File" values for security reason */
+                /* We don't allow the invalid "IME File" values due to security reason */
                 if (dwType != REG_SZ || szImeFileName[0] == 0 ||
                     wcscspn(szImeFileName, L":\\/") != wcslen(szImeFileName) ||
                     GetFileAttributesW(szPath) == INVALID_FILE_ATTRIBUTES) /* Does not exist? */
@@ -833,9 +809,8 @@ IntLoadKeyboardLayout(
 
     dwHKL = MAKELONG(wLow, wHigh);
 
-    ZeroMemory(&ustrKbdName, sizeof(ustrKbdName));
     RtlInitUnicodeString(&ustrKLID, pwszKLID);
-    hNewKL = NtUserLoadKeyboardLayoutEx(NULL, 0, &ustrKbdName, NULL, &ustrKLID, dwHKL, Flags);
+    hNewKL = NtUserLoadKeyboardLayoutEx(NULL, 0, NULL, hklUnload, &ustrKLID, dwHKL, Flags);
     CliImmInitializeHotKeys(SETIMEHOTKEY_ADD, hNewKL);
     return hNewKL;
 }

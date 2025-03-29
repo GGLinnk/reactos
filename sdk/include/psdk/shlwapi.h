@@ -25,6 +25,15 @@
 #include <objbase.h>
 #include <shtypes.h>
 
+#ifndef _SHLWAPI_
+#define LWSTDAPI_(type)  EXTERN_C DECLSPEC_IMPORT type WINAPI
+#define LWSTDAPIV_(type) EXTERN_C DECLSPEC_IMPORT type STDAPIVCALLTYPE
+#else
+#define LWSTDAPI_(type)  type WINAPI
+#define LWSTDAPIV_(type) type STDAPIVCALLTYPE
+#endif
+#define LWSTDAPI         LWSTDAPI_(HRESULT)
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -643,6 +652,32 @@ typedef enum
 {
     ASSOCENUM_NONE
 } ASSOCENUM;
+
+typedef enum
+{
+    FTA_None                  = 0x00000000,
+    FTA_Exclude               = 0x00000001,
+    FTA_Show                  = 0x00000002,
+    FTA_HasExtension          = 0x00000004,
+    FTA_NoEdit                = 0x00000008,
+    FTA_NoRemove              = 0x00000010,
+    FTA_NoNewVerb             = 0x00000020,
+    FTA_NoEditVerb            = 0x00000040,
+    FTA_NoRemoveVerb          = 0x00000080,
+    FTA_NoEditDesc            = 0x00000100,
+    FTA_NoEditIcon            = 0x00000200,
+    FTA_NoEditDflt            = 0x00000400,
+    FTA_NoEditVerbCmd         = 0x00000800,
+    FTA_NoEditVerbExe         = 0x00001000,
+    FTA_NoDDE                 = 0x00002000,
+    FTA_NoEditMIME            = 0x00008000,
+    FTA_OpenIsSafe            = 0x00010000,
+    FTA_AlwaysUnsafe          = 0x00020000,
+    FTA_NoRecentDocs          = 0x00100000,
+    FTA_SafeForElevation      = 0x00200000, /* Win8+ */
+    FTA_AlwaysUseDirectInvoke = 0x00400000  /* Win8+ */
+} FILETYPEATTRIBUTEFLAGS;
+DEFINE_ENUM_FLAG_OPERATORS(FILETYPEATTRIBUTEFLAGS)
 
 typedef struct IQueryAssociations *LPQUERYASSOCIATIONS;
 
@@ -1532,8 +1567,8 @@ LPSTR WINAPI StrDupA(_In_ LPCSTR);
 LPWSTR WINAPI StrDupW(_In_ LPCWSTR);
 #define StrDup WINELIB_NAME_AW(StrDup)
 
-HRESULT WINAPI SHStrDupA(_In_ LPCSTR, _Outptr_ WCHAR**);
-HRESULT WINAPI SHStrDupW(_In_ LPCWSTR, _Outptr_ WCHAR**);
+HRESULT WINAPI SHStrDupA(_In_ LPCSTR psz, _Outptr_ WCHAR** ppwsz);
+HRESULT WINAPI SHStrDupW(_In_ LPCWSTR psz, _Outptr_ WCHAR** ppwsz);
 #define SHStrDup WINELIB_NAME_AW(SHStrDup)
 
 LPSTR
@@ -1871,6 +1906,14 @@ SHCreateStreamOnFileEx(
 
 HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,struct IStream**);
 
+#ifndef _SHLWAPI_
+LWSTDAPI IStream_Reset(_In_ struct IStream*);
+#if !defined(IStream_Read) && defined(__cplusplus)
+LWSTDAPI IStream_Read(_In_ struct IStream*, _Out_ void*, _In_ ULONG);
+LWSTDAPI IStream_Write(_In_ struct IStream*, _In_ const void*, _In_ ULONG);
+#endif
+#endif
+
 #endif /* NO_SHLWAPI_STREAM */
 
 #ifndef NO_SHLWAPI_SHARED
@@ -1906,6 +1949,8 @@ SHFreeShared(
     );
 
 #endif /* NO_SHLWAPI_SHARED */
+
+INT WINAPI GetMenuPosFromID(_In_ HMENU hMenu, _In_ UINT uID);
 
 /* SHAutoComplete flags */
 #define SHACF_DEFAULT               0x00000000
@@ -2003,8 +2048,8 @@ HRESULT
 WINAPI
 SHGetViewStatePropertyBag(
   _In_opt_ PCIDLIST_ABSOLUTE pidl,
-  _In_opt_ LPWSTR bag_name,
-  DWORD flags,
+  _In_opt_ LPCWSTR bag_name,
+  _In_ DWORD flags,
   _In_ REFIID riid,
   _Outptr_ void **ppv);
 
@@ -2089,6 +2134,9 @@ QISearch(
 
 #define OFFSETOFCLASS(base, derived) \
     ((DWORD)(DWORD_PTR)(static_cast<base*>((derived*)8))-8)
+
+#define QITABENTMULTI(Cthis, Ifoo, Iimpl) { &IID_##Ifoo, OFFSETOFCLASS(Iimpl, Cthis) }
+#define QITABENT(Cthis, Ifoo) QITABENTMULTI(Cthis, Ifoo, Ifoo)
 
 #include <poppack.h>
 

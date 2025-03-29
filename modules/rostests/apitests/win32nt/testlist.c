@@ -72,7 +72,7 @@ const struct test winetest_testlist[] =
     /* ntdd*/
     { "NtGdiDdCreateDirectDrawObject", func_NtGdiDdCreateDirectDrawObject },
     { "NtGdiDdDeleteDirectDrawObject", func_NtGdiDdDeleteDirectDrawObject },
-    { "NtGdiDdQueryDirectDrawObject", func_NtGdiDdQueryDirectDrawObject },
+    // { "NtGdiDdQueryDirectDrawObject", func_NtGdiDdQueryDirectDrawObject },
     { "NtGdiArcInternal", func_NtGdiArcInternal },
 
     /* ntgdi */
@@ -92,7 +92,7 @@ const struct test winetest_testlist[] =
     //{ "NtGdiFlushUserBatch", func_NtGdiFlushUserBatch },
     { "NtGdiGetBitmapBits", func_NtGdiGetBitmapBits },
     { "NtGdiGetDIBitsInternal", func_NtGdiGetDIBitsInternal },
-    { "NtGdiGetFontResourceInfoInternalW", func_NtGdiGetFontResourceInfoInternalW },
+    //{ "NtGdiGetFontResourceInfoInternalW", func_NtGdiGetFontResourceInfoInternalW },
     { "NtGdiGetRandomRgn", func_NtGdiGetRandomRgn },
     { "NtGdiGetStockObject", func_NtGdiGetStockObject },
     { "NtGdiIntersectClipRect", func_NtGdiIntersectClipRect },

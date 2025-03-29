@@ -851,7 +851,7 @@ LANStatusDlg(
             }
             break;
         case WM_SHOWSTATUSDLG:
-            if (LOWORD(lParam) == WM_LBUTTONDOWN)
+            if (LOWORD(lParam) == WM_LBUTTONUP)
             {
                 pContext = (LANSTATUSUI_CONTEXT*)GetWindowLongPtr(hwndDlg, DWLP_USER);
                 if (!pContext)
@@ -1027,7 +1027,7 @@ CLanStatus::ShowStatusDialogByCLSID(const GUID *pguidCmdGroup)
     {
         if (IsEqualGUID(pItem->guidItem, *pguidCmdGroup))
         {
-            SendMessageW(pItem->hwndDlg, WM_SHOWSTATUSDLG, 0, WM_LBUTTONDOWN);
+            SendMessageW(pItem->hwndDlg, WM_SHOWSTATUSDLG, 0, WM_LBUTTONUP);
             return S_OK;
         }
         pItem = pItem->pNext;

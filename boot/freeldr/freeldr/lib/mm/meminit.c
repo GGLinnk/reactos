@@ -34,6 +34,19 @@ PFREELDR_MEMORY_DESCRIPTOR BiosMemoryMap;
 ULONG BiosMemoryMapEntryCount;
 SIZE_T FrLdrImageSize;
 
+ULONG
+MmGetBiosMemoryMap(_Out_ PFREELDR_MEMORY_DESCRIPTOR *MemoryMap)
+{
+    *MemoryMap = BiosMemoryMap;
+    return BiosMemoryMapEntryCount;
+}
+
+PFN_NUMBER
+MmGetTotalPagesInLookupTable(VOID)
+{
+    return TotalPagesInLookupTable;
+}
+
 #if DBG
 typedef struct
 {
@@ -95,6 +108,14 @@ DbgDumpMemoryMap(
                  MmGetSystemMemoryMapTypeString(List[i].MemoryType));
     }
     DbgPrint("\n");
+}
+#else
+/* Dummy, so we can export it */
+PCSTR
+MmGetSystemMemoryMapTypeString(
+    TYPE_OF_MEMORY Type)
+{
+    return "-";
 }
 #endif
 
@@ -238,6 +259,7 @@ static
 VOID
 MmCheckFreeldrImageFile(VOID)
 {
+#ifndef UEFIBOOT
     PIMAGE_NT_HEADERS NtHeaders;
     PIMAGE_FILE_HEADER FileHeader;
     PIMAGE_OPTIONAL_HEADER OptionalHeader;
@@ -308,6 +330,7 @@ MmCheckFreeldrImageFile(VOID)
 
     /* Calculate the full image size */
     FrLdrImageSize = (ULONG_PTR)&__ImageBase + OptionalHeader->SizeOfImage - FREELDR_BASE;
+#endif
 }
 
 BOOLEAN MmInitializeMemoryManager(VOID)
@@ -417,9 +440,9 @@ PVOID MmFindLocationForPageLookupTable(PFN_NUMBER TotalPageCount)
     SIZE_T PageLookupTableSize;
     PFN_NUMBER RequiredPages;
     PFN_NUMBER CandidateBasePage = 0;
-    PFN_NUMBER CandidatePageCount;
+    PFN_NUMBER CandidatePageCount = 0;
     PFN_NUMBER PageLookupTableEndPage;
-    PVOID PageLookupTableMemAddress = NULL;
+    PVOID PageLookupTableMemAddress;
 
     // Calculate how much pages we need to keep the page lookup table
     PageLookupTableSize = TotalPageCount * sizeof(PAGE_LOOKUP_TABLE_ITEM);
@@ -699,4 +722,10 @@ BOOLEAN MmAreMemoryPagesAvailable(PVOID PageLookupTable, PFN_NUMBER TotalPageCou
     }
 
     return TRUE;
+}
+
+PFN_NUMBER
+MmGetHighestPhysicalPage(VOID)
+{
+    return MmHighestPhysicalPage;
 }

@@ -96,7 +96,7 @@
 # Apisets
 #   M: learn-more, learn_more, Mark Jansen
 #   S: Maintained
-/dll/apisets/   @learn-more
+/sdk/lib/apisets/   @learn-more
 
 # Application Compatibility subystem
 #   M: learn-more, learn_more, Mark Jansen
@@ -252,6 +252,16 @@
 /modules/rostests/kmtests/ntos_se/   @GeoB99
 /ntoskrnl/se/                        @GeoB99
 
+# Shell
+#   M:
+#   R: learn-more, learn_more, Mark Jansen
+#   R: yagoulas, Giannis Adamopoulos
+#   S: Maintained
+/base/shell/explorer/   @learn-more @yagoulas
+/base/shell/rshell/     @learn-more @yagoulas
+/dll/win32/browseui/    @learn-more @yagoulas
+/dll/win32/shell32/     @learn-more @yagoulas
+
 # Shell Extensions
 #   M:
 #   R: learn-more, learn_more, Mark Jansen
@@ -327,6 +337,11 @@
 #   S: Maintained
 amd64/                                      @tkreuzer
 /boot/freeldr/freeldr/arch/realmode/amd64.S @tkreuzer
+
+# Wine DirectX
+#   M: The_DarkFire_, Justin Miller
+#   S: Upstream
+/dll/directx/wine/ @DarkFire01
 
 # Translations
 # This is the list of translation teams in ReactOS GitHub organization.

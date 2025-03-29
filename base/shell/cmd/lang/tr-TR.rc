@@ -102,9 +102,9 @@ CTTY [cihaz]\n\n\
             AUX, COMx (x=1..N), CON, LPTx (x=1..N), PRN, NUL.\n\
             CON genellikle varsayılan standart G/Ç cihazıdır..\n\n\
 Kontrolü standart konsola geri döndürmek için, yardımcı cihazda CTTY CON yazın."
-    STRING_DATE_HELP1 "\nYeni tarihi giriniz (ay%cgün%cyıl): "
-    STRING_DATE_HELP2 "\nYeni tarihi giriniz (gün%cay%cyıl): "
-    STRING_DATE_HELP3 "\nYeni tarihi giriniz (yıl%cay%cgün): "
+    STRING_DATE_HELP1 "Yeni tarihi giriniz (ay%cgün%cyıl): "
+    STRING_DATE_HELP2 "Yeni tarihi giriniz (gün%cay%cyıl): "
+    STRING_DATE_HELP3 "Yeni tarihi giriniz (yıl%cay%cgün): "
     STRING_DATE_HELP4 "Tarihi görüntüler veya ayarlar.\n\n\
 DATE [/T][tarih]\n\n\
   /T    sadece tarihi gösterir\n\n\
@@ -173,10 +173,10 @@ bir anahtarın önüne - (tire) koyarak ön ayarlı anahtarları geçersiz kıl�
     STRING_DIR_HELP2 " %c sürücüsündeki birimin etiketi %s\n"
     STRING_DIR_HELP3 " %c sürücüsündeki birimin etiketi yok.\n"
     STRING_DIR_HELP4 " Birimin Seri Numarası: %04X-%04X\n"
-    STRING_DIR_HELP5 "\n     Toplam Listelenen Dosya Miktarı:\n%16i dosya(lar)% 14s bayt değerinde\n"
-    STRING_DIR_HELP6 "%16i dizin %15s bayt boş\n"
+    STRING_DIR_HELP5 "\n     Toplam Listelenen Dosya Miktarı:\n%16i dosya(lar) %14s bayt değerinde\n"
+    STRING_DIR_HELP6 "%16i dizin      %14s bayt boş\n"
     STRING_DIR_HELP7 "\n %s'nın dizini\n\n"
-    STRING_DIR_HELP8 "%16i dosya(lar)% 14s bayt\n"
+    STRING_DIR_HELP8 "%16i dosya(lar) %14s bayt\n"
     STRING_DIRSTACK_HELP1 "Şimdiki dizini POPD komutu tarafından kullanılmak üzere depolar,\n\
 ardından belirtilen dizine değiştirir.\n\n\
 PUSHD [yol | ..]\n\n\
@@ -244,7 +244,8 @@ command           Koşul karşılanırsa yürütülecek komutu belirtir.\n\
 dizi1==dizi2      Belirtilen metin dizeleri eşleşirse doğru bir koşul belirtir\n\
 EXIST dosya_adi   Belirtilen dosya adı mevcutsa doğru bir koşul belirtir.\n\
 DEFINED variable  Belirtilen değişken tanımlanmışsa doğru bir koşul belirtir\n"
-    STRING_LOCALE_HELP1 "Şimdiki zaman: "
+    STRING_DATE_NOW "The current date is: "
+    STRING_TIME_NOW "Şimdiki zaman: "
     STRING_MKDIR_HELP "Bir dizin oluşturur.\n\n\
 MKDIR [sürücü:]yol\nMD [sürücü:]yol"
     STRING_MKLINK_HELP "Bir dosya sistemi bağlantı nesnesi oluşturur.\n\n\
@@ -335,31 +336,6 @@ Hedefiniz için yeni bir sürücü veya yol belirtemeyeceğinizi unutmayın.\n\
 Bu amaç için MOVE komutunu kullanın.\n"
     STRING_REN_HELP2 "    %lu dosya yeniden adlandırıldı\n"
     STRING_REN_HELP3 "    %lu dosya yeniden adlandırıldı\n"
-    STRING_REPLACE_HELP1 "Replaces files.\n\n\
-REPLACE [sürücü1:][yol1]filename [sürücü2:][yol2] [/A] [/P] [/R] [/W]\n\
-REPLACE [sürücü1:][yol1]filename [sürücü2:][yol2] [/P] [/R] [/S] [/W] [/U]\n\n\
-  [drive1:][yol1]dosya adı  Kaynak dosyayı veya dosyaları belirtir.\n\
-  [drive2:][yol2]           Dosyaların aktarılacağı dizini belirtir.\n\
-  /A                        Hedef dizine yeni dosyalar ekler. /S veya /U\n\
-                            anahtarlarıyla kullanılamaz.\n\
-  /P                        Bir dosyayı değiştirmeden veya bir kaynak dosya eklemeden\n\
-                            önce onay ister.\n\
-  /R                        Salt okunur dosyaları da normal dosyalar gibi değiştirir\n\
-  /S                        Hedef dizinin tüm alt dizinlerindeki dosyaları değiştirir.\n\
-                            /A anahtarıyla kullanılamaz.\n\
-  /W                        Başlamadan önce bir disk yerleştirmenizi bekler.\n\
-  /U                        Yalnızca kaynak dosyalardan daha eski dosyaları\n\
-                            değiştirir (günceller). /A anahtarıyla kullanılamaz.\n"
-    STRING_REPLACE_HELP2 "Kaynak konum gerekli\n"
-    STRING_REPLACE_HELP3 "Herhangi bir dosya değiştirilmedi\n"
-    STRING_REPLACE_HELP4 "%lu dosya değiştirildi\n"
-    STRING_REPLACE_HELP5 "Değiştiriliyor: %s\n"
-    STRING_REPLACE_HELP6 "Değiştir: %s\n"
-    STRING_REPLACE_HELP7 "Herhangi bir dosya eklenemedi\n"
-    STRING_REPLACE_HELP8 "%lu dosya(lar) eklendi\n"
-    STRING_REPLACE_HELP9 "Şunu ekle %s (E/H)? "
-    STRING_REPLACE_HELP10 "Şunu değiştir %s (E/H)? "
-    STRING_REPLACE_HELP11 "Ekleniyor: %s\n"
     STRING_SHIFT_HELP "Bir toplu iş dosyasında değiştirilebilir parametrelerin konumunu değiştirir.\n\n\
 SHIFT [DOWN]"
     STRING_SCREEN_HELP "İmleci hareket ettirin ve isteğe bağlı olarak parametre olarak verilen metni yazdırın.\n\n\
@@ -433,7 +409,7 @@ yayınlanan GNU Genel Kamu Lisansı'nın 2. sürümü ya da (sizin tercihinize g
 bir sürüm altında olmak kaydı ile, lisansın size sağladığı koşullar altında yeniden dağıtabilir ve\n\
 / veya değiştirebilirsiniz;\n"
     STRING_VERSION_HELP5 "\nHata raporlarını <jira.reactos.org> e-posta adresine bildirin.\n\
-Güncellemeleri takip etmek için: http://www.reactos.org"
+Güncellemeleri takip etmek için: https://reactos.org"
     STRING_VERSION_HELP6 "\nFreeDOS sürümü şu kişi tarafından yazılmıştır:\n"
     STRING_VERSION_HELP7 "\nReactOS sürümü şu kişi tarafından yazılmıştır:\n"
     STRING_VOL_HELP1 " %c sürücüsündeki birim %s'dir\n"
@@ -469,23 +445,23 @@ başlık        pencere için yeni başlık\n"
     STRING_CMD_ERROR3 "%s dosyasına yönlendirilemedi\n"
     STRING_CMD_ERROR4 "%s çalışıtırılıyor...\n"
     STRING_CMD_ERROR5 "cmdexit.bat çalıştırılıyor...\n"
-    STRING_COLOR_ERROR1 "Aynı renk hatası! (Arka plan ve ön plan aynı renk olamaz)"
-    STRING_COLOR_ERROR2 "Renk özelliklerinde hata"
+    STRING_COLOR_ERROR1 "Aynı renk hatası! (Arka plan ve ön plan aynı renk olamaz)\n"
+    STRING_COLOR_ERROR2 "Renk özelliklerinde hata\n"
     STRING_CONSOLE_ERROR "Bilinmeyen Hata: %d\n"
     STRING_COPY_ERROR1 "Hata: Kaynak açılamadı - %s!\n"
     STRING_COPY_ERROR2 "Hata: Kendi üzerine kopyalanamaz!\n"
     STRING_COPY_ERROR3 "Hata: Hedefe yazılırken hata oluştu!\n"
     STRING_COPY_ERROR4 "Hata: Henüz eklenmedi/geliştirilmedi!\n"
-    STRING_DATE_ERROR "Geçersiz tarih."
+    STRING_DATE_ERROR "Geçersiz tarih.\n"
     STRING_DEL_ERROR5 "%s dosyası silinecek! "
     STRING_DEL_ERROR6 "Emin misiniz (E/H)? "
     STRING_DEL_ERROR7 "Siliniyor: %s\n"
     STRING_ERROR_ERROR1 "Bilinmeyen hata! Hata kodu: 0x%lx\n"
     STRING_ERROR_ERROR2 "Sözdizimi hatası"
-    STRING_FOR_ERROR1 "'for' döngüsü içerisinde 'in' ifadesi eksik."
-    STRING_FOR_ERROR2 "parantez bulunamadı."
-    STRING_FOR_ERROR3 "'do' eksik."
-    STRING_FOR_ERROR4 "'do' ifadesinin ardından herhangi bir komut girilmedi."
+    STRING_FOR_ERROR1 "'for' döngüsü içerisinde 'in' ifadesi eksik.\n"
+    STRING_FOR_ERROR2 "parantez bulunamadı.\n"
+    STRING_FOR_ERROR3 "'do' eksik.\n"
+    STRING_FOR_ERROR4 "'do' ifadesinin ardından herhangi bir komut girilmedi.\n"
     STRING_FREE_ERROR1 "Geçersiz sürücü"
     STRING_FREE_ERROR2 "etiketsiz"
     STRING_GOTO_ERROR1 "GOTO için bir etiket bulunamadı.\n"
@@ -494,10 +470,10 @@ başlık        pencere için yeni başlık\n"
     STRING_MD_ERROR2 "Yeni dizinin yolu mevcut değil.\n"
     STRING_MOVE_ERROR1 "[TAMAM]\n"
     STRING_MOVE_ERROR2 "[Hata]\n"
-    STRING_REN_ERROR1 "MoveFile() hatayla sonuçlandı. Hata: %lu\n"
-    STRING_TIME_ERROR1 "Yanlış tarih."
-    STRING_TYPE_ERROR1 "Yanlış ayar '/%s'\n"
-    STRING_WINDOW_ERROR1 "Pencere bulunamadı"
+    STRING_REN_ERROR "MoveFile() hatayla sonuçlandı. Hata: %lu\n"
+    STRING_TIME_ERROR "Yanlış tarih.\n"
+    STRING_TYPE_ERROR "Yanlış ayar '/%s'\n"
+    STRING_WINDOW_ERROR "Pencere bulunamadı\n"
     STRING_ERROR_PARAMETERF_ERROR "Parametre biçimi hatalı - %c\n"
     STRING_ERROR_INVALID_SWITCH "Geçersiz anahtar - /%c\n"
     STRING_ERROR_TOO_MANY_PARAMETERS "Çok fazla parametre girildi - %s\n"
@@ -511,24 +487,25 @@ başlık        pencere için yeni başlık\n"
     STRING_ERROR_CANNOTPIPE "Hata! Borulanamadı! Geçici dosya açılamıyor!\n"
     STRING_ERROR_D_PAUSEMSG "Devam etmek için herhangi bir tuşa basın . . . "
     STRING_ERROR_DRIVER_NOT_READY "Sürücü hazır değil"
+    STRING_ERROR_INVALID_NUMBER1 "Invalid number. Numeric constants are either decimal (42), hexadecimal (0x2A), or octal (052).\n"
+    STRING_ERROR_INVALID_NUMBER2 "Invalid number. Numbers are limited to 32-bits of precision.\n"
+    STRING_ERROR_DIVISION_BY_ZERO "Division by zero error.\n"
+    STRING_ERROR_INVALID_DEVICE L"Invalid device '%s'\n"
+    STRING_ERROR_CALL_BAD_LABEL "Invalid attempt to call batch label outside of batch script.\n"
+    STRING_ERROR_UNEXPECTED "%s was unexpected.\n"
+    STRING_ERROR_WHILE_PROCESSING "Error occurred while processing: %s.\n"
     STRING_SET_ENV_ERROR "'%s' çevresel değişkeni tanımlanmadı.\n"
-    STRING_REPLACE_ERROR1 "Geçersiz anahtar - %s\n"
-    STRING_REPLACE_ERROR2 "Yol bulunamadı - %s\n"
-    STRING_REPLACE_ERROR3 "Dosya adı, dizin adı veya birim etiketi sözdizimi yanlış.\n"
-    STRING_REPLACE_ERROR4 "Hatalı parametre kombinasyonu\n"
-    STRING_REPLACE_ERROR5 "Erişim reddedildi - %s\n"
-    STRING_REPLACE_ERROR6 "Hiçbir dosya bulunamadı - %s\n"
-    STRING_REPLACE_ERROR7 "Genişletilmiş Hata 32\n"
     STRING_CMD_INFOLINE "  ReactOS Komut Satırı                                 Yardım için, HELP yazın"
+    STRING_CMD_COPYRIGHT "(C) Copyright 1996-%s ReactOS Team.\n"
     STRING_REACTOS_VERSION "ReactOS [Sürüm %s %s]\n"
     STRING_CMD_SHELLINFO "\nReactOS Komut Satırı Yorumlayıcısı\nSürüm %s %s"
     STRING_VERSION_RUNNING_ON "Üzerinde Çalışıyor: "
     STRING_VERSION_RUNVER "%s [Sürüm %d.%d.%d] %s"
     STRING_COPY_FILE "        %d adet dosya(lar) kopyalandı\n"
     STRING_DELETE_WIPE "temizlendi"
-    STRING_FOR_ERROR "hatalı değişken belirtimi."
-    STRING_SCREEN_COL "sütun için geçersiz değer"
-    STRING_SCREEN_ROW "satır için geçersiz değer"
+    STRING_FOR_ERROR "hatalı değişken belirtimi.\n"
+    STRING_SCREEN_COL "sütun için geçersiz değer\n"
+    STRING_SCREEN_ROW "satır için geçersiz değer\n"
     STRING_TIMER_TIME "Sayaç %d, %s'dır: "
     STRING_MKLINK_CREATED_SYMBOLIC "%s <<===>> %s için sembolik bağlantı oluşturuldu.\n"
     STRING_MKLINK_CREATED_HARD "%s <<===>> %s için sabit bağlantı oluşturuldu.\n"

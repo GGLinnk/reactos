@@ -98,6 +98,9 @@ HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\PCI#CC_0301","Clas
 HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP0303","Service",0x00000000,"i8042prt"
 HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP0303","ClassGUID",0x00000000,"{4D36E96B-E325-11CE-BFC1-08002BE10318}"
 
+HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP030B","Service",0x00000000,"i8042prt"
+HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP030B","ClassGUID",0x00000000,"{4D36E96B-E325-11CE-BFC1-08002BE10318}"
+
 HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP0F0E","Service",0x00000000,"i8042prt"
 HKLM,"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase\*PNP0F0E","ClassGUID",0x00000000,"{4D36E96F-E325-11CE-BFC1-08002BE10318}"
 
@@ -1097,7 +1100,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","040a",0x00000000,"l_intl.n
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","080a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0c0a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","100a",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","140a",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","140a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","180a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","1c0a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","200a",0x00000000,"l_intl.nls"
@@ -1147,7 +1150,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","041d",0x00000000,"l_intl.n
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","081d",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","041e",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","041f",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0420",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0420",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0421",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0422",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0423",0x00000000,"l_intl.nls"
@@ -1155,15 +1158,15 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0424",0x00000000,"l_intl.n
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0425",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0426",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0427",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0429",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042a",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0429",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042a",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042b",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042c",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","082c",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042d",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","042f",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0436",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0437",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0437",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0438",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0439",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","043e",0x00000000,"l_intl.nls"
@@ -1175,7 +1178,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0443",0x00000000,"l_intl.n
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0843",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0444",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0445",0x00000000,"l_intl.nls"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0455",0x00000000,"l_intl.nls"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0455",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0456",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","048f",0x00000000,"l_intl.nls"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","0490",0x00000000,"l_intl.nls"
@@ -1186,26 +1189,30 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language","InstallLanguage",0x0000000
 ; Supported and installed locales
 ; If you add/uncomment an entry here, please also add the appropriate Language
 ; in the previous section.
+; See also: https://www.venea.net/web/culture-code
+;           https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/70feba9f-294e-491e-b6eb-56532684c37f
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale",,0x00000012
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000401",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000801",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000c01",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001001",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001401",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001801",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001c01",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002001",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002401",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002801",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002c01",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003001",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003401",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003801",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003c01",0x00000000,""
-HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00004001",0x00000000,""
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000401",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000801",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000c01",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001001",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001401",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001801",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001c01",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002001",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002401",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002801",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00002c01",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003001",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003401",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003801",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00003c01",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00004001",0x00000000,"d"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000402",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000403",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000404",0x00000000,"9"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000c04",0x00000000,"9"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001004",0x00000000,"a"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000804",0x00000000,"a"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000405",0x00000000,"2"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000406",0x00000000,"1"
@@ -1228,7 +1235,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000040a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000080a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000c0a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000100a",0x00000000,"1"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000140a",0x00000000,"1"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000140a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000180a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00001c0a",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000200a",0x00000000,"1"
@@ -1265,7 +1272,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000814",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000415",0x00000000,"2"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000416",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000816",0x00000000,"1"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000417",0x00000000,"1"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000417",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000418",0x00000000,"2"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000419",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000041a",0x00000000,"2"
@@ -1277,7 +1284,7 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000041d",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000081d",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000041e",0x00000000,"b"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000041f",0x00000000,"6"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000420",0x00000000,""
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000420",0x00000000,"d"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000421",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000422",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000423",0x00000000,"5"
@@ -1285,15 +1292,15 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000424",0x00000000,"2"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000425",0x00000000,"3"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000426",0x00000000,"3"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000427",0x00000000,"3"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000429",0x00000000,""
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042a",0x00000000,""
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000429",0x00000000,"d"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042a",0x00000000,"e"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042b",0x00000000,"11"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042c",0x00000000,"6"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000082c",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042d",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000042f",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000436",0x00000000,"1"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000437",0x00000000,"10"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000437",0x00000000,"10"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000438",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000439",0x00000000,"f"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000043e",0x00000000,"1"
@@ -1304,11 +1311,11 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000441",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000443",0x00000000,"6"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000843",0x00000000,"5"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000444",0x00000000,"5"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000445",0x00000000,"f"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000455",0x00000000,""
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000445",0x00000000,"f"
+HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000455",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000456",0x00000000,"1"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000048f",0x00000000,"1"
-;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000490",0x00000000,"1"
+;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","0000048f",0x00000000,"1" ; tdd-Tale-CN, reserved
+;HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Locale","00000490",0x00000000,"1" ; khb-Talu-CN, reserved
 
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language Groups","1",0x00000000,"1"
 HKLM,"SYSTEM\CurrentControlSet\Control\Nls\Language Groups","2",0x00000000,"1"
@@ -1518,7 +1525,6 @@ HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\DOS Devices","PRN",0x0000
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","ComSpec",0x00020002,"%SystemRoot%\system32\cmd.exe"
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","Path",0x00020002,"%SystemRoot%\bin;%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem"
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","PATHEXT",0x00000002,".COM;.EXE;.BAT;.CMD"
-HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","PROMPT",0x00000002,"$P$G$I"
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","TEMP",0x00020002,"%SystemRoot%\TEMP"
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","TMP",0x00020002,"%SystemRoot%\TEMP"
 HKLM,"SYSTEM\CurrentControlSet\Control\Session Manager\Environment","windir",0x00020002,"%SystemRoot%"
@@ -1732,13 +1738,6 @@ HKLM,"SYSTEM\CurrentControlSet\Services\NMIDebug","Group",0x00000000,"Base"
 HKLM,"SYSTEM\CurrentControlSet\Services\NMIDebug","ImagePath",0x00020000,"system32\drivers\nmidebug.sys"
 HKLM,"SYSTEM\CurrentControlSet\Services\NMIDebug","Start",0x00010001,0x00000000
 HKLM,"SYSTEM\CurrentControlSet\Services\NMIDebug","Type",0x00010001,0x00000001
-
-; NDIS User I/O driver (FIXME: Should be installed via INF and started on demand)
-HKLM,"SYSTEM\CurrentControlSet\Services\Ndisuio","ErrorControl",0x00010001,0x00000001
-HKLM,"SYSTEM\CurrentControlSet\Services\Ndisuio","Group",0x00000000,"NDIS"
-HKLM,"SYSTEM\CurrentControlSet\Services\Ndisuio","ImagePath",0x00020000,"system32\drivers\ndisuio.sys"
-HKLM,"SYSTEM\CurrentControlSet\Services\Ndisuio","Start",0x00010001,0x00000001
-HKLM,"SYSTEM\CurrentControlSet\Services\Ndisuio","Type",0x00010001,0x00000001
 
 ; Packet driver
 HKLM,"SYSTEM\CurrentControlSet\Services\Packet","ErrorControl",0x00010001,0x00000001
@@ -2224,6 +2223,13 @@ HKLM,"SYSTEM\Setup","SystemSetupInProgress",0x00010001,0x00000001
 ; Winsrv configuration
 HKLM,"SYSTEM\CurrentControlSet\Control\PriorityControl",,0x00000012
 HKLM,"SYSTEM\CurrentControlSet\Control\PriorityControl","Win32PrioritySeparation",0x00010001,0x2
+
+; FontLink settings
+HKLM,"SYSTEM\CurrentControlSet\Control\FontAssoc\Associated Charset","ANSI(00)",0x00000000,"NO"
+HKLM,"SYSTEM\CurrentControlSet\Control\FontAssoc\Associated Charset","OEM(FF)",0x00000000,"NO"
+HKLM,"SYSTEM\CurrentControlSet\Control\FontAssoc\Associated Charset","SYMBOL(02)",0x00000000,"NO"
+HKLM,"SYSTEM\CurrentControlSet\Control\FontAssoc\Associated DefaultFonts","AssocSystemFont",0x00000000,"DroidSansFallback.ttf"
+HKLM,"SYSTEM\CurrentControlSet\Control\FontAssoc\Associated DefaultFonts","FontPackage",0x00000000,"Droid Sans Fallback"
 
 [AddReg.NTarm]
 ; RAM Disk class driver
@@ -2743,7 +2749,7 @@ SECLOGON_SERVICE_DESCRIPTION="Activa processos de início sob credenciais altern
 SERVER_SERVICE="Servidor"
 SERVER_SERVICE_DESCRIPTION="Suporta a partilha de ficheiros, impressoras e recursos de rede."
 
-SPOOLER_SERVICE="Spooler de impressão"
+SPOOLER_SERVICE="Fila de impressão"
 SPOOLER_SERVICE_DESCRIPTION="Carrega ficheiros na memória para impressão posterior."
 
 TCPSVCS_SERVICE="Serviços TCP/IP simples"
@@ -2866,8 +2872,8 @@ AUDIO_SERVICE_DESCRIPTION="Oferă aplicațiilor funcționalități audio."
 BITS_SERVICE="Serviciu de transfer inteligent în fundal"
 BITS_SERVICE_DESCRIPTION="Transferă fișiere în fundal utilizând lățimea de bandă nefolosită a rețelei."
 
-DCOMLAUNCH_SERVICE="DcomLaunch service"
-DCOMLAUNCH_SERVICE_DESCRIPTION="DcomLaunch service stub."
+DCOMLAUNCH_SERVICE="Serviciul DcomLaunch"
+DCOMLAUNCH_SERVICE_DESCRIPTION="Serviciu simulat de lansare Dcom."
 
 EVENTLOG_SERVICE="Jurnal de evenimente"
 EVENTLOG_SERVICE_DESCRIPTION="Jurnalizează mesajele sau evenimentele transmise de sistemul de operare într-o bază de date accesibilă cu instrumentul „observator de evenimente”."
@@ -2876,22 +2882,22 @@ MSISERVER_SERVICE="Instalare ReactOS"
 MSISERVER_SERVICE_DESCRIPTION="Controlează instalarea, mentenanța, și eliminarea de programe de instalare MSI (Windows Installer)."
 
 NETLOGON_SERVICE="Autentificare în rețea"
-NETLOGON_SERVICE_DESCRIPTION="Stabilește un canal securizat către un controlor de domentiu pentru autentificarea domeniului."
+NETLOGON_SERVICE_DESCRIPTION="Stabilește un canal securizat către un dispozitiv de control de domeniu pentru autentificarea domeniului."
 
 PLUGPLAY_SERVICE="Plug and Play"
-PLUGPLAY_SERVICE_DESCRIPTION="Detectează schimbările în configurația fizică și instalează programele necesare dacă este posibil."
+PLUGPLAY_SERVICE_DESCRIPTION="Detectează schimbările hardware și instalează software-ul necesar dacă este posibil."
 
 RPCSS_SERVICE="Apel procedural la distanță"
 RPCSS_SERVICE_DESCRIPTION="Subsistemul responsabil pentru apel procedural la distanță în calculatorul local."
 
-SAMSS_SERVICE="Security Accounts Manager"
-SAMSS_SERVICE_DESCRIPTION="The startup of this service signals other services that the Security Accounts Manager (SAM) is ready to accept requests.  Disabling this service will prevent other services in the system from being notified when the SAM is ready, which may in turn cause those services to fail to start correctly.  This service should not be disabled."
+SAMSS_SERVICE="Manager de conturi de securitate"
+SAMSS_SERVICE_DESCRIPTION="Pornirea acestui serviciu semnalează altor servicii că Managerul de conturi de securitate (SAM) este gata să accepte cereri. Dezactivarea acestui serviciu va împiedica alte servicii din sistem să fie notificate atunci când SAM e gata ceea ce, la rândul său, poate face ca acele servicii să nu pornească corect. Acest serviciu nu ar trebui dezactivat."
 
 SCHEDULE_SERVICE="Serviciu de planificare"
 SCHEDULE_SERVICE_DESCRIPTION="Permite pornirea de programe la o anumită oră."
 
-SECLOGON_SERVICE="Secondary Logon"
-SECLOGON_SERVICE_DESCRIPTION="Allows to start processes under alternative credentials."
+SECLOGON_SERVICE="Conectare secundară"
+SECLOGON_SERVICE_DESCRIPTION="Permite pornirea proceselor cu acreditări alternative."
 
 SERVER_SERVICE="Server"
 SERVER_SERVICE_DESCRIPTION="Permite partajarea în rețea a fișierelor, imprimantelor și a altor resurse."
@@ -2917,8 +2923,8 @@ WLANSVC_SERVICE_DESCRIPTION="Serviciu pentru rețele locale fără fir."
 WORKSTATION_SERVICE="Stație de lucru"
 WORKSTATION_SERVICE_DESCRIPTION="Serviciu responsabil pentru crearea și menținerea conexiunilor la servere în rețea."
 
-WUAUSERV_SERVICE="Automatic Updates"
-WUAUSERV_SERVICE_DESCRIPTION="AutoUpdate Service stub."
+WUAUSERV_SERVICE="Actualizări autmoate"
+WUAUSERV_SERVICE_DESCRIPTION="Un înlocuitor pentru serviciul de actualizări automate."
 
 ; Keyboard layouts
 ALBANIAN = "Albaneză"
@@ -3058,8 +3064,8 @@ SPOOLER_SERVICE_DESCRIPTION="Загружает файлы в память дл�
 TCPSVCS_SERVICE="Простые службы TCP/IP"
 TCPSVCS_SERVICE_DECRIPTION="Поддержка следующих служб TCP/IP: Chargen, Daytime, Discard, Echo, QOTD."
 
-TELNETD_SERVICE="ReactOS Telnet Service"
-TELNETD_SERVICE_DESCRIPTION="ReactOS Telnet Service"
+TELNETD_SERVICE="Служба ReactOS Telnet"
+TELNETD_SERVICE_DESCRIPTION="Служба ReactOS Telnet"
 
 THEMES_SERVICE="Темы"
 THEMES_SERVICE_DESCRIPTION="Поддержка тем оформления."
@@ -3073,8 +3079,8 @@ WLANSVC_SERVICE_DESCRIPTION="Обеспечивает поддержку бес�
 WORKSTATION_SERVICE="Рабочая станция"
 WORKSTATION_SERVICE_DESCRIPTION="Обеспечивает поддержку сетевых подключений и связь."
 
-WUAUSERV_SERVICE="Automatic Updates"
-WUAUSERV_SERVICE_DESCRIPTION="AutoUpdate Service stub."
+WUAUSERV_SERVICE="Автоматическое обновление"
+WUAUSERV_SERVICE_DESCRIPTION="Заглушка для службы автоматического обновления."
 
 ; Keyboard layouts
 ALBANIAN = "Албанская"

@@ -17,7 +17,6 @@
  *
  *
  * PROJECT:         ReactOS kernel
- * FILE:            ntoskrnl/mm/section.c
  * PURPOSE:         Implements section objects
  *
  * PROGRAMMERS:     Rex Jolliff
@@ -814,7 +813,7 @@ l_ReadHeaderFromFile:
             DIE(("Memory gap between section %u and the previous\n", i));
 
         /* ignore explicit BSS sections */
-        if(pishSectionHeaders[i].SizeOfRawData != 0)
+        if(pishSectionHeaders[i].PointerToRawData != 0 && pishSectionHeaders[i].SizeOfRawData != 0)
         {
             /* validate the alignment */
 #if 0
@@ -1335,9 +1334,16 @@ MmMakeSegmentResident(
             RtlZeroMemory(Pages, BYTES_TO_PAGES(ReadLength) * sizeof(PFN_NUMBER));
             for (UINT i = 0; i < BYTES_TO_PAGES(ReadLength); i++)
             {
-                /* MmRequestPageMemoryConsumer succeeds or bugchecks */
-                (void)MmRequestPageMemoryConsumer(MC_USER, FALSE, &Pages[i]);
+                Status = MmRequestPageMemoryConsumer(MC_USER, FALSE, &Pages[i]);
+                if (!NT_SUCCESS(Status))
+                {
+                    /* Damn. Roll-back. */
+                    for (UINT j = 0; j < i; j++)
+                        MmReleasePageMemoryConsumer(MC_USER, Pages[j]);
+                    goto Failed;
+                }
             }
+
             Mdl->MdlFlags |= MDL_PAGES_LOCKED | MDL_IO_PAGE_READ;
 
             LARGE_INTEGER FileOffset;
@@ -1389,6 +1395,7 @@ MmMakeSegmentResident(
                 for (UINT i = 0; i < BYTES_TO_PAGES(ReadLength); i++)
                     MmReleasePageMemoryConsumer(MC_USER, Pages[i]);
 
+Failed:
                 MmLockSectionSegment(Segment);
                 while (ChunkOffset < ChunkEnd)
                 {
@@ -1477,7 +1484,7 @@ MmAlterViewAttributes(PMMSUPPORT AddressSpace,
                     break;
                 MmUnlockSectionSegment(Segment);
                 MmUnlockAddressSpace(AddressSpace);
-                YieldProcessor();
+                KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
                 MmLockAddressSpace(AddressSpace);
                 MmLockSectionSegment(Segment);
             }
@@ -1502,7 +1509,12 @@ MmAlterViewAttributes(PMMSUPPORT AddressSpace,
                  */
                 Page = MmGetPfnForProcess(Process, Address);
 
-                Protect = PAGE_READONLY;
+                /* Choose protection based on what was requested */
+                if (NewProtect == PAGE_EXECUTE_READWRITE)
+                    Protect = PAGE_EXECUTE_READ;
+                else
+                    Protect = PAGE_READONLY;
+
                 if (IS_SWAP_FROM_SSE(Entry) || PFN_FROM_SSE(Entry) != Page)
                 {
                     Protect = NewProtect;
@@ -1608,9 +1620,18 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
         if (SwapEntry == MM_WAIT_ENTRY)
         {
             MmUnlockAddressSpace(AddressSpace);
-            YieldProcessor();
+            KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
             MmLockAddressSpace(AddressSpace);
             return STATUS_MM_RESTART_OPERATION;
+        }
+
+        MI_SET_USAGE(MI_USAGE_SECTION);
+        if (Process) MI_SET_PROCESS2(Process->ImageFileName);
+        if (!Process) MI_SET_PROCESS2("Kernel Section");
+        Status = MmRequestPageMemoryConsumer(MC_USER, TRUE, &Page);
+        if (!NT_SUCCESS(Status))
+        {
+            return STATUS_NO_MEMORY;
         }
 
         /*
@@ -1627,14 +1648,6 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
         MmCreatePageFileMapping(Process, Address, MM_WAIT_ENTRY);
 
         MmUnlockAddressSpace(AddressSpace);
-        MI_SET_USAGE(MI_USAGE_SECTION);
-        if (Process) MI_SET_PROCESS2(Process->ImageFileName);
-        if (!Process) MI_SET_PROCESS2("Kernel Section");
-        Status = MmRequestPageMemoryConsumer(MC_USER, TRUE, &Page);
-        if (!NT_SUCCESS(Status))
-        {
-            KeBugCheck(MEMORY_MANAGEMENT);
-        }
 
         Status = MmReadFromSwapPage(SwapEntry, Page);
         if (!NT_SUCCESS(Status))
@@ -1689,10 +1702,10 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
          * Just map the desired physical page
          */
         Page = (PFN_NUMBER)(Offset.QuadPart >> PAGE_SHIFT);
-        Status = MmCreateVirtualMappingUnsafe(Process,
-                                              PAddress,
-                                              Region->Protect,
-                                              Page);
+        Status = MmCreatePhysicalMapping(Process,
+                                         PAddress,
+                                         Region->Protect,
+                                         Page);
         if (!NT_SUCCESS(Status))
         {
             DPRINT("MmCreateVirtualMappingUnsafe failed, not out of memory\n");
@@ -1736,7 +1749,12 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
             MI_SET_USAGE(MI_USAGE_SECTION);
             if (Process) MI_SET_PROCESS2(Process->ImageFileName);
             if (!Process) MI_SET_PROCESS2("Kernel Section");
-            MmRequestPageMemoryConsumer(MC_USER, FALSE, &Page);
+            Status = MmRequestPageMemoryConsumer(MC_USER, FALSE, &Page);
+            if (!NT_SUCCESS(Status))
+            {
+                MmUnlockSectionSegment(Segment);
+                return STATUS_NO_MEMORY;
+            }
             MmSetPageEntrySectionSegment(Segment, &Offset, MAKE_SSE(Page << PAGE_SHIFT, 1));
             MmUnlockSectionSegment(Segment);
 
@@ -1770,6 +1788,10 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
         MmLockAddressSpace(AddressSpace);
         if (!NT_SUCCESS(Status))
         {
+            if (Status == STATUS_NO_MEMORY)
+            {
+                return Status;
+            }
             /* Damn */
             DPRINT1("Failed to page data in!\n");
             return STATUS_IN_PAGE_ERROR;
@@ -1789,9 +1811,16 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
         {
             MmUnlockSectionSegment(Segment);
             MmUnlockAddressSpace(AddressSpace);
-            YieldProcessor();
+            KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
             MmLockAddressSpace(AddressSpace);
             return STATUS_MM_RESTART_OPERATION;
+        }
+
+        Status = MmRequestPageMemoryConsumer(MC_USER, TRUE, &Page);
+        if (!NT_SUCCESS(Status))
+        {
+            MmUnlockSectionSegment(Segment);
+            return STATUS_NO_MEMORY;
         }
 
         /*
@@ -1801,11 +1830,6 @@ MmNotPresentFaultSectionView(PMMSUPPORT AddressSpace,
         MmUnlockSectionSegment(Segment);
 
         MmUnlockAddressSpace(AddressSpace);
-        Status = MmRequestPageMemoryConsumer(MC_USER, TRUE, &Page);
-        if (!NT_SUCCESS(Status))
-        {
-            KeBugCheck(MEMORY_MANAGEMENT);
-        }
 
         Status = MmReadFromSwapPage(SwapEntry, Page);
         if (!NT_SUCCESS(Status))
@@ -1905,6 +1929,7 @@ MmAccessFaultSectionView(PMMSUPPORT AddressSpace,
     BOOLEAN Cow = FALSE;
     ULONG NewProtect;
     BOOLEAN Unmapped;
+    NTSTATUS Status;
 
     DPRINT("MmAccessFaultSectionView(%p, %p, %p)\n", AddressSpace, MemoryArea, Address);
 
@@ -1990,9 +2015,11 @@ MmAccessFaultSectionView(PMMSUPPORT AddressSpace,
     /*
      * Allocate a page
      */
-    if (!NT_SUCCESS(MmRequestPageMemoryConsumer(MC_USER, TRUE, &NewPage)))
+    Status = MmRequestPageMemoryConsumer(MC_USER, TRUE, &NewPage);
+    if (!NT_SUCCESS(Status))
     {
-        KeBugCheck(MEMORY_MANAGEMENT);
+        MmUnlockSectionSegment(Segment);
+        return STATUS_NO_MEMORY;
     }
 
     /*
@@ -3442,7 +3469,7 @@ MmFreeSectionPage(PVOID Context, MEMORY_AREA* MemoryArea, PVOID Address,
         MmUnlockSectionSegment(Segment);
         MmUnlockAddressSpace(AddressSpace);
 
-        YieldProcessor();
+        KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
 
         MmLockAddressSpace(AddressSpace);
         MmLockSectionSegment(Segment);
@@ -3578,7 +3605,7 @@ MiRosUnmapViewOfSection(IN PEPROCESS Process,
 
     ASSERT(Process);
 
-    AddressSpace = Process ? &Process->Vm : MmGetKernelAddressSpace();
+    AddressSpace = &Process->Vm;
 
     MemoryArea = MmLocateMemoryAreaByAddress(AddressSpace,
                  BaseAddress);
@@ -3645,6 +3672,18 @@ MiRosUnmapViewOfSection(IN PEPROCESS Process,
     }
     else
     {
+        PMM_SECTION_SEGMENT Segment = MemoryArea->SectionData.Segment;
+        PMMVAD Vad = &MemoryArea->VadNode;
+        PCONTROL_AREA ControlArea  = Vad->ControlArea;
+        PFILE_OBJECT FileObject;
+        SIZE_T ViewSize;
+        LARGE_INTEGER ViewOffset;
+        ViewOffset.QuadPart = MemoryArea->SectionData.ViewOffset;
+
+        InterlockedIncrement64(Segment->ReferenceCount);
+
+        ViewSize = PAGE_SIZE + ((Vad->EndingVpn - Vad->StartingVpn) << PAGE_SHIFT);
+
         Status = MmUnmapViewOfSegment(AddressSpace, BaseAddress);
         if (!NT_SUCCESS(Status))
         {
@@ -3652,6 +3691,50 @@ MiRosUnmapViewOfSection(IN PEPROCESS Process,
                     BaseAddress, Process, Status);
             ASSERT(NT_SUCCESS(Status));
         }
+
+        /* These might be deleted now */
+        Vad = NULL;
+        MemoryArea = NULL;
+
+        if (FlagOn(*Segment->Flags, MM_PHYSICALMEMORY_SEGMENT))
+        {
+            /* Don't bother */
+            MmDereferenceSegment(Segment);
+            return STATUS_SUCCESS;
+        }
+        ASSERT(FlagOn(*Segment->Flags, MM_DATAFILE_SEGMENT));
+
+        FileObject = Segment->FileObject;
+        FsRtlAcquireFileExclusive(FileObject);
+
+        /* Don't bother for auto-delete closed file. */
+        if (FlagOn(FileObject->Flags, FO_DELETE_ON_CLOSE) && FlagOn(FileObject->Flags, FO_CLEANUP_COMPLETE))
+        {
+            FsRtlReleaseFile(FileObject);
+            MmDereferenceSegment(Segment);
+            return STATUS_SUCCESS;
+        }
+
+        /*
+         * Flush only when last mapping is deleted.
+         * FIXME: Why ControlArea == NULL? Or rather: is ControlArea ever not NULL here?
+         */
+        if (ControlArea == NULL || ControlArea->NumberOfMappedViews == 1)
+        {
+            while (ViewSize > 0)
+            {
+                ULONG FlushSize = min(ViewSize, PAGE_ROUND_DOWN(MAXULONG));
+                MmFlushSegment(FileObject->SectionObjectPointer,
+                               &ViewOffset,
+                               FlushSize,
+                               NULL);
+                ViewSize -= FlushSize;
+                ViewOffset.QuadPart += FlushSize;
+            }
+        }
+
+        FsRtlReleaseFile(FileObject);
+        MmDereferenceSegment(Segment);
     }
 
     /* Notify debugger */
@@ -3795,7 +3878,7 @@ NtQuerySection(
             }
             else
             {
-                DPRINT1("Unimplemented code path!");
+                DPRINT1("Unimplemented code path\n");
             }
 
             _SEH2_TRY
@@ -3930,6 +4013,8 @@ MmMapViewOfSection(IN PVOID SectionObject,
     PMMSUPPORT AddressSpace;
     NTSTATUS Status = STATUS_SUCCESS;
     BOOLEAN NotAtBase = FALSE;
+    BOOLEAN IsAttached = FALSE;
+    KAPC_STATE ApcState;
 
     if (MiIsRosSectionObject(SectionObject) == FALSE)
     {
@@ -3951,6 +4036,12 @@ MmMapViewOfSection(IN PVOID SectionObject,
     if (!Protect || Protect & ~PAGE_FLAGS_VALID_FOR_SECTION)
     {
         return STATUS_INVALID_PAGE_PROTECTION;
+    }
+
+    if (PsGetCurrentProcess() != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
+        IsAttached = TRUE;
     }
 
     /* FIXME: We should keep this, but it would break code checking equality */
@@ -4019,15 +4110,15 @@ MmMapViewOfSection(IN PVOID SectionObject,
             /* Fail if the user requested a fixed base address. */
             if ((*BaseAddress) != NULL)
             {
-                MmUnlockAddressSpace(AddressSpace);
-                return STATUS_CONFLICTING_ADDRESSES;
+                Status = STATUS_CONFLICTING_ADDRESSES;
+                goto Exit;
             }
             /* Otherwise find a gap to map the image. */
             ImageBase = (ULONG_PTR)MmFindGap(AddressSpace, PAGE_ROUND_UP(ImageSize), MM_VIRTMEM_GRANULARITY, FALSE);
             if (ImageBase == 0)
             {
-                MmUnlockAddressSpace(AddressSpace);
-                return STATUS_CONFLICTING_ADDRESSES;
+                Status = STATUS_CONFLICTING_ADDRESSES;
+                goto Exit;
             }
             /* Remember that we loaded image at a different base address */
             NotAtBase = TRUE;
@@ -4058,8 +4149,7 @@ MmMapViewOfSection(IN PVOID SectionObject,
                     MmUnlockSectionSegment(&SectionSegments[i]);
                 }
 
-                MmUnlockAddressSpace(AddressSpace);
-                return Status;
+                goto Exit;
             }
         }
 
@@ -4082,22 +4172,22 @@ MmMapViewOfSection(IN PVOID SectionObject,
         if ((Protect & (PAGE_READWRITE|PAGE_EXECUTE_READWRITE)) &&
                 !(Section->InitialPageProtection & (PAGE_READWRITE|PAGE_EXECUTE_READWRITE)))
         {
-            MmUnlockAddressSpace(AddressSpace);
-            return STATUS_SECTION_PROTECTION;
+            Status = STATUS_SECTION_PROTECTION;
+            goto Exit;
         }
         /* check for read access */
         if ((Protect & (PAGE_READONLY|PAGE_WRITECOPY|PAGE_EXECUTE_READ|PAGE_EXECUTE_WRITECOPY)) &&
                 !(Section->InitialPageProtection & (PAGE_READONLY|PAGE_READWRITE|PAGE_WRITECOPY|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE|PAGE_EXECUTE_WRITECOPY)))
         {
-            MmUnlockAddressSpace(AddressSpace);
-            return STATUS_SECTION_PROTECTION;
+            Status = STATUS_SECTION_PROTECTION;
+            goto Exit;
         }
         /* check for execute access */
         if ((Protect & (PAGE_EXECUTE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE|PAGE_EXECUTE_WRITECOPY)) &&
                 !(Section->InitialPageProtection & (PAGE_EXECUTE|PAGE_EXECUTE_READ|PAGE_EXECUTE_READWRITE|PAGE_EXECUTE_WRITECOPY)))
         {
-            MmUnlockAddressSpace(AddressSpace);
-            return STATUS_SECTION_PROTECTION;
+            Status = STATUS_SECTION_PROTECTION;
+            goto Exit;
         }
 
         if (SectionOffset == NULL)
@@ -4111,8 +4201,8 @@ MmMapViewOfSection(IN PVOID SectionObject,
 
         if ((ViewOffset % PAGE_SIZE) != 0)
         {
-            MmUnlockAddressSpace(AddressSpace);
-            return STATUS_MAPPED_ALIGNMENT;
+            Status = STATUS_MAPPED_ALIGNMENT;
+            goto Exit;
         }
 
         if ((*ViewSize) == 0)
@@ -4141,17 +4231,23 @@ MmMapViewOfSection(IN PVOID SectionObject,
         MmUnlockSectionSegment(Segment);
         if (!NT_SUCCESS(Status))
         {
-            MmUnlockAddressSpace(AddressSpace);
-            return Status;
+            goto Exit;
         }
     }
-
-    MmUnlockAddressSpace(AddressSpace);
 
     if (NotAtBase)
         Status = STATUS_IMAGE_NOT_AT_BASE;
     else
         Status = STATUS_SUCCESS;
+
+Exit:
+
+    MmUnlockAddressSpace(AddressSpace);
+
+    if (IsAttached)
+    {
+        KeUnstackDetachProcess(&ApcState);
+    }
 
     return Status;
 }
@@ -4159,9 +4255,11 @@ MmMapViewOfSection(IN PVOID SectionObject,
 /*
  * @unimplemented
  */
-BOOLEAN NTAPI
-MmCanFileBeTruncated (IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-                      IN PLARGE_INTEGER   NewFileSize)
+BOOLEAN
+NTAPI
+MmCanFileBeTruncated(
+    _In_ PSECTION_OBJECT_POINTERS SectionObjectPointer,
+    _In_opt_ PLARGE_INTEGER NewFileSize)
 {
     BOOLEAN Ret;
     PMM_SECTION_SEGMENT Segment;
@@ -4187,7 +4285,7 @@ MmCanFileBeTruncated (IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
         /* If the cache is the only one holding a reference to the segment, then it's fine to resize */
         Ret = TRUE;
     }
-    else
+    else if (NewFileSize != NULL)
     {
         /* We can't shrink, but we can extend */
         Ret = NewFileSize->QuadPart >= Segment->RawLength.QuadPart;
@@ -4198,6 +4296,12 @@ MmCanFileBeTruncated (IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
         }
 #endif
     }
+    else
+    {
+        DPRINT1("ERROR: File can't be truncated because it has references held to its data section\n");
+        Ret = FALSE;
+    }
+
     MmUnlockSectionSegment(Segment);
     MmDereferenceSegment(Segment);
 
@@ -4452,7 +4556,7 @@ MmMapViewInSystemSpaceEx (
     return Status;
 }
 
-/* This function must be called with adress space lock held */
+/* This function must be called with address space lock held */
 NTSTATUS
 NTAPI
 MiRosUnmapViewInSystemSpace(IN PVOID MappedBase)
@@ -4671,10 +4775,13 @@ MmCreateSection (OUT PVOID  * Section,
     return Status;
 }
 
+/* This function is not used. It is left for future use, when per-process
+ * address space is considered. */
+#if 0
 BOOLEAN
 NTAPI
 MmArePagesResident(
-    _In_ PEPROCESS Process,
+    _In_opt_ PEPROCESS Process,
     _In_ PVOID Address,
     _In_ ULONG Length)
 {
@@ -4722,6 +4829,7 @@ MmArePagesResident(
     MmUnlockAddressSpace(AddressSpace);
     return Ret;
 }
+#endif
 
 /* Like CcPurgeCache but for the in-memory segment */
 BOOLEAN
@@ -4734,18 +4842,18 @@ MmPurgeSegment(
     LARGE_INTEGER PurgeStart, PurgeEnd;
     PMM_SECTION_SEGMENT Segment;
 
-    Segment = MiGrabDataSection(SectionObjectPointer);
-    if (!Segment)
-    {
-        /* Nothing to purge */
-        return TRUE;
-    }
-
     PurgeStart.QuadPart = Offset ? Offset->QuadPart : 0LL;
     if (Length && Offset)
     {
         if (!NT_SUCCESS(RtlLongLongAdd(PurgeStart.QuadPart, Length, &PurgeEnd.QuadPart)))
             return FALSE;
+    }
+
+    Segment = MiGrabDataSection(SectionObjectPointer);
+    if (!Segment)
+    {
+        /* Nothing to purge */
+        return TRUE;
     }
 
     MmLockSectionSegment(Segment);
@@ -4755,9 +4863,9 @@ MmPurgeSegment(
         /* We must calculate the length for ourselves */
         /* FIXME: All of this is suboptimal */
         ULONG ElemCount = RtlNumberGenericTableElements(&Segment->PageTable);
-        /* No page. Nothing to purge */
         if (!ElemCount)
         {
+            /* No page. Nothing to purge */
             MmUnlockSectionSegment(Segment);
             MmDereferenceSegment(Segment);
             return TRUE;
@@ -4766,6 +4874,9 @@ MmPurgeSegment(
         PCACHE_SECTION_PAGE_TABLE PageTable = RtlGetElementGenericTable(&Segment->PageTable, ElemCount - 1);
         PurgeEnd.QuadPart = PageTable->FileOffset.QuadPart + _countof(PageTable->PageEntries) * PAGE_SIZE;
     }
+
+    /* Find byte offset of the page to start */
+    PurgeStart.QuadPart = PAGE_ROUND_DOWN_64(PurgeStart.QuadPart);
 
     while (PurgeStart.QuadPart < PurgeEnd.QuadPart)
     {
@@ -4816,6 +4927,48 @@ MmPurgeSegment(
     return TRUE;
 }
 
+BOOLEAN
+NTAPI
+MmIsDataSectionResident(
+    _In_ PSECTION_OBJECT_POINTERS SectionObjectPointer,
+    _In_ LONGLONG Offset,
+    _In_ ULONG Length)
+{
+    PMM_SECTION_SEGMENT Segment;
+    LARGE_INTEGER RangeStart, RangeEnd;
+    BOOLEAN Ret = TRUE;
+
+    RangeStart.QuadPart = Offset;
+    if (!NT_SUCCESS(RtlLongLongAdd(RangeStart.QuadPart, Length, &RangeEnd.QuadPart)))
+        return FALSE;
+
+    Segment = MiGrabDataSection(SectionObjectPointer);
+    if (!Segment)
+        return FALSE;
+
+    /* Find byte offset of the page to start */
+    RangeStart.QuadPart = PAGE_ROUND_DOWN_64(RangeStart.QuadPart);
+
+    MmLockSectionSegment(Segment);
+
+    while (RangeStart.QuadPart < RangeEnd.QuadPart)
+    {
+        ULONG_PTR Entry = MmGetPageEntrySectionSegment(Segment, &RangeStart);
+        if ((Entry == 0) || IS_SWAP_FROM_SSE(Entry))
+        {
+            Ret = FALSE;
+            break;
+        }
+
+        RangeStart.QuadPart += PAGE_SIZE;
+    }
+
+    MmUnlockSectionSegment(Segment);
+    MmDereferenceSegment(Segment);
+
+    return Ret;
+}
+
 NTSTATUS
 NTAPI
 MmMakeDataSectionResident(
@@ -4834,6 +4987,63 @@ MmMakeDataSectionResident(
     MmDereferenceSegment(Segment);
 
     return Status;
+}
+
+NTSTATUS
+NTAPI
+MmMakeSegmentDirty(
+    _In_ PSECTION_OBJECT_POINTERS SectionObjectPointer,
+    _In_ LONGLONG Offset,
+    _In_ ULONG Length)
+{
+    PMM_SECTION_SEGMENT Segment;
+    LARGE_INTEGER RangeStart, RangeEnd;
+    NTSTATUS Status;
+
+    RangeStart.QuadPart = Offset;
+    Status = RtlLongLongAdd(RangeStart.QuadPart, Length, &RangeEnd.QuadPart);
+    if (!NT_SUCCESS(Status))
+        return Status;
+
+    Segment = MiGrabDataSection(SectionObjectPointer);
+    if (!Segment)
+        return STATUS_NOT_MAPPED_VIEW;
+
+    /* Find byte offset of the page to start */
+    RangeStart.QuadPart = PAGE_ROUND_DOWN_64(RangeStart.QuadPart);
+
+    MmLockSectionSegment(Segment);
+
+    while (RangeStart.QuadPart < RangeEnd.QuadPart)
+    {
+        ULONG_PTR Entry = MmGetPageEntrySectionSegment(Segment, &RangeStart);
+
+        /* Let any pending read proceed */
+        while (MM_IS_WAIT_PTE(Entry))
+        {
+            MmUnlockSectionSegment(Segment);
+            KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
+            MmLockSectionSegment(Segment);
+            Entry = MmGetPageEntrySectionSegment(Segment, &RangeStart);
+        }
+
+        /* We are called from Cc, this can't be backed by the page files */
+        ASSERT(!IS_SWAP_FROM_SSE(Entry));
+
+        /* If there is no page there, there is nothing to make dirty */
+        if (Entry != 0)
+        {
+            /* Dirtify the entry */
+            MmSetPageEntrySectionSegment(Segment, &RangeStart, DIRTY_SSE(Entry));
+        }
+
+        RangeStart.QuadPart += PAGE_SIZE;
+    }
+
+    MmUnlockSectionSegment(Segment);
+    MmDereferenceSegment(Segment);
+
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS
@@ -4862,9 +5072,7 @@ MmFlushSegment(
     if (!Segment)
     {
         /* Nothing to flush */
-        if (Iosb)
-            Iosb->Status = STATUS_SUCCESS;
-        return STATUS_SUCCESS;
+        goto Quit;
     }
 
     ASSERT(*Segment->Flags & MM_DATAFILE_SEGMENT);
@@ -4877,25 +5085,20 @@ MmFlushSegment(
 
         /* FIXME: All of this is suboptimal */
         ULONG ElemCount = RtlNumberGenericTableElements(&Segment->PageTable);
-        /* No page. Nothing to flush */
         if (!ElemCount)
         {
+            /* No page. Nothing to flush */
             MmUnlockSectionSegment(Segment);
             MmDereferenceSegment(Segment);
-            if (Iosb)
-            {
-                Iosb->Status = STATUS_SUCCESS;
-                Iosb->Information = 0;
-            }
-            return STATUS_SUCCESS;
+            goto Quit;
         }
 
         PCACHE_SECTION_PAGE_TABLE PageTable = RtlGetElementGenericTable(&Segment->PageTable, ElemCount - 1);
         FlushEnd.QuadPart = PageTable->FileOffset.QuadPart + _countof(PageTable->PageEntries) * PAGE_SIZE;
     }
 
-    FlushStart.QuadPart >>= PAGE_SHIFT;
-    FlushStart.QuadPart <<= PAGE_SHIFT;
+    /* Find byte offset of the page to start */
+    FlushStart.QuadPart = PAGE_ROUND_DOWN_64(FlushStart.QuadPart);
 
     while (FlushStart.QuadPart < FlushEnd.QuadPart)
     {
@@ -4915,6 +5118,8 @@ MmFlushSegment(
     MmUnlockSectionSegment(Segment);
     MmDereferenceSegment(Segment);
 
+Quit:
+    /* FIXME: Handle failures */
     if (Iosb)
         Iosb->Status = STATUS_SUCCESS;
 
@@ -5098,10 +5303,13 @@ MmCheckDirtySegment(
     return FALSE;
 }
 
+/* This function is not used. It is left for future use, when per-process
+ * address space is considered. */
+#if 0
 NTSTATUS
 NTAPI
 MmMakePagesDirty(
-    _In_ PEPROCESS Process,
+    _In_opt_ PEPROCESS Process,
     _In_ PVOID Address,
     _In_ ULONG Length)
 {
@@ -5144,7 +5352,7 @@ MmMakePagesDirty(
         {
             MmUnlockSectionSegment(Segment);
             MmUnlockAddressSpace(AddressSpace);
-            YieldProcessor();
+            KeDelayExecutionThread(KernelMode, FALSE, &TinyTime);
             MmLockAddressSpace(AddressSpace);
             MmLockSectionSegment(Segment);
             Entry = MmGetPageEntrySectionSegment(Segment, &SegmentOffset);
@@ -5168,6 +5376,7 @@ MmMakePagesDirty(
     MmUnlockAddressSpace(AddressSpace);
     return STATUS_SUCCESS;
 }
+#endif
 
 NTSTATUS
 NTAPI

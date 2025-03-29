@@ -1158,11 +1158,9 @@ GetEnhancedVar(
         if (hFind != INVALID_HANDLE_VALUE)
         {
             PTSTR FixedComponent = w32fd.cFileName;
-            if (*w32fd.cAlternateFileName &&
-                ((Modifiers & M_SHORT) || !_tcsicmp(In, w32fd.cAlternateFileName)))
-            {
+            if ((Modifiers & M_SHORT) && *w32fd.cAlternateFileName)
                 FixedComponent = w32fd.cAlternateFileName;
-            }
+
             FindClose(hFind);
 
             if (Out + _tcslen(FixedComponent) + 1 >= &FixedPath[ARRAYSIZE(FixedPath)])
@@ -2256,6 +2254,22 @@ Initialize(VOID)
             {
                 OutputStreamMode = UTF16Text;
             }
+            else if (option == _T('F'))
+            {
+                if (!_tcsnicmp(&ptr[2], _T(":OFF"), 4))
+                {
+                    /* Disable file and path completion */
+                    AutoCompletionChar = 0x20;
+                    PathCompletionChar = 0x20;
+                }
+                else /* Enable completion by default */
+                {
+                    /* Enable (and replace) file and path completion
+                     * characters with Ctrl-F and Ctrl-D respectively */
+                    AutoCompletionChar = 0x06; // Ctrl-F
+                    PathCompletionChar = 0x04; // Ctrl-D
+                }
+            }
             else if (option == _T('V'))
             {
                 // FIXME: Check validity of the parameter given to V !
@@ -2301,11 +2315,15 @@ Initialize(VOID)
     if (!*ptr)
     {
         /* If neither /C or /K was given, display a simple version string */
-        ConOutChar(_T('\n'));
+
+        /* Insert a new line above the copyright notice if we are drawing the information line. */
+        if (HasInfoLine())
+            ConOutChar('\n');
+
         ConOutResPrintf(STRING_REACTOS_VERSION,
                         _T(KERNEL_VERSION_STR),
                         _T(KERNEL_VERSION_BUILD_STR));
-        ConOutPuts(_T("(C) Copyright 1998-") _T(COPYRIGHT_YEAR) _T(" ReactOS Team.\n"));
+        ConOutResPrintf(STRING_CMD_COPYRIGHT, _T(COPYRIGHT_YEAR));
     }
 
     if (AutoRun)

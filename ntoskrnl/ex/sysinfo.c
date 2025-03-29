@@ -208,7 +208,7 @@ ExLockUserBuffer(
     PMDL *OutMdl)
 {
     PMDL Mdl;
-    PAGED_CODE();
+    ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
     *MappedSystemVa = NULL;
     *OutMdl = NULL;
@@ -342,17 +342,17 @@ ExGetCurrentProcessorCpuUsage(PULONG CpuUsage)
  */
 VOID
 NTAPI
-ExGetCurrentProcessorCounts(PULONG ThreadKernelTime,
-                            PULONG TotalCpuTime,
+ExGetCurrentProcessorCounts(PULONG IdleTime,
+                            PULONG KernelAndUserTime,
                             PULONG ProcessorNumber)
 {
     PKPRCB Prcb;
 
     Prcb = KeGetCurrentPrcb();
 
-    *ThreadKernelTime = Prcb->KernelTime + Prcb->UserTime;
-    *TotalCpuTime = Prcb->CurrentThread->KernelTime;
-    *ProcessorNumber = KeGetCurrentProcessorNumber();
+    *IdleTime = Prcb->IdleThread->KernelTime;
+    *KernelAndUserTime = Prcb->KernelTime + Prcb->UserTime;
+    *ProcessorNumber = (ULONG)Prcb->Number;
 }
 
 /*
@@ -564,11 +564,12 @@ NtEnumerateSystemEnvironmentValuesEx(IN ULONG InformationClass,
 
 NTSTATUS
 NTAPI
-NtQuerySystemEnvironmentValueEx(IN PUNICODE_STRING VariableName,
-                                IN LPGUID VendorGuid,
-                                IN PVOID Value,
-                                IN OUT PULONG ReturnLength,
-                                IN OUT PULONG Attributes)
+NtQuerySystemEnvironmentValueEx(
+    _In_ PUNICODE_STRING VariableName,
+    _In_ LPGUID VendorGuid,
+    _Out_opt_ PVOID Value,
+    _Inout_ PULONG ReturnLength,
+    _Out_opt_ PULONG Attributes)
 {
     UNIMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
@@ -576,11 +577,12 @@ NtQuerySystemEnvironmentValueEx(IN PUNICODE_STRING VariableName,
 
 NTSTATUS
 NTAPI
-NtSetSystemEnvironmentValueEx(IN PUNICODE_STRING VariableName,
-                              IN LPGUID VendorGuid,
-                              IN PVOID Value,
-                              IN OUT PULONG ReturnLength,
-                              IN OUT PULONG Attributes)
+NtSetSystemEnvironmentValueEx(
+    _In_ PUNICODE_STRING VariableName,
+    _In_ LPGUID VendorGuid,
+    _In_reads_bytes_opt_(ValueLength) PVOID Value,
+    _In_ ULONG ValueLength,
+    _In_ ULONG Attributes)
 {
     UNIMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
@@ -662,7 +664,13 @@ QSI_DEF(SystemProcessorInformation)
 #else
     Spi->MaximumProcessors = 0;
 #endif
-    Spi->ProcessorFeatureBits = KeFeatureBits;
+
+    /* According to Geoff Chappell, on Win 8.1 x64 / Win 10 x86, where this
+       field is extended to 64 bits, it continues to produce only the low 32
+       bits. For the full value, use SYSTEM_PROCESSOR_FEATURES_INFORMATION.
+       See https://www.geoffchappell.com/studies/windows/km/ntoskrnl/api/ex/sysinfo/processor.htm
+     */
+    Spi->ProcessorFeatureBits = (ULONG)KeFeatureBits;
 
     DPRINT("Arch %u Level %u Rev 0x%x\n", Spi->ProcessorArchitecture,
         Spi->ProcessorLevel, Spi->ProcessorRevision);
@@ -1384,7 +1392,7 @@ QSI_DEF(SystemHandleInformation)
 
                         HandleInformation->Handles[Index].CreatorBackTraceIndex = 0;
 
-#if 0 /* FIXME!!! Type field currupted */
+#if 0 /* FIXME!!! Type field corrupted */
                         HandleInformation->Handles[Index].ObjectTypeIndex =
                             (UCHAR) ObjectHeader->Type->Index;
 #else
@@ -2570,7 +2578,7 @@ QSI_DEF(SystemExtendedHandleInformation)
 
                         HandleInformation->Handle[Index].CreatorBackTraceIndex = 0;
 
-#if 0 /* FIXME!!! Type field currupted */
+#if 0 /* FIXME!!! Type field corrupted */
                         HandleInformation->Handles[Index].ObjectTypeIndex =
                             (UCHAR) ObjectHeader->Type->Index;
 #else

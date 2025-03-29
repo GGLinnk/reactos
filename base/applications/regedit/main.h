@@ -2,20 +2,7 @@
  * Regedit definitions
  *
  * Copyright (C) 2002 Robert Dickenson <robd@reactos.org>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * LICENSE: LGPL-2.1-or-later (https://spdx.org/licenses/LGPL-2.1-or-later)
  */
 
 #pragma once
@@ -97,7 +84,7 @@ void ShowAboutBox(HWND hWnd);
 LRESULT CALLBACK ChildWndProc(HWND, UINT, WPARAM, LPARAM);
 void ResizeWnd(int cx, int cy);
 LPCWSTR get_root_key_name(HKEY hRootKey);
-VOID UpdateAddress(HTREEITEM hItem, HKEY hRootKey, LPCWSTR pszPath);
+VOID UpdateAddress(HTREEITEM hItem, HKEY hRootKey, LPCWSTR pszPath, BOOL bSelectNone);
 
 /* edit.c */
 BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCWSTR valueName, BOOL EditBin);
@@ -125,7 +112,7 @@ BOOL ExportRegistryFile(HWND hWnd);
 
 /* listview.c */
 HWND CreateListView(HWND hwndParent, HMENU id, INT cx);
-BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCWSTR keyPath);
+BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCWSTR keyPath, BOOL bSelectNone);
 WCHAR *GetValueName(HWND hwndLV, int iStartAt);
 BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 BOOL TreeWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
@@ -162,5 +149,8 @@ BOOL SelectNode(HWND hwndTV, LPCWSTR keyPath);
 void DestroyTreeView(HWND hwndTV);
 void DestroyListView(HWND hwndLV);
 void DestroyMainMenu(void);
+
+/* txtproc.c */
+BOOL txt_export_registry_key(LPCWSTR file_name, LPCWSTR path);
 
 /* EOF */

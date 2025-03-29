@@ -10,7 +10,7 @@
  */
 
 #include <win32k.h>
-#include <ddk/immdev.h>
+#include <immdev.h>
 
 // Was included only because of CP_ACP and required  the
 // definition of SYSTEMTIME in ndk\rtltypes.h
@@ -23,7 +23,7 @@ PKL gspklBaseLayout = NULL; /* FIXME: Please move this to pWinSta->spklList */
 PKBDFILE gpkfList = NULL;
 DWORD gSystemFS = 0;
 UINT gSystemCPCharSet = 0;
-DWORD gLCIDSentToShell = 0;
+HKL ghKLSentToShell = NULL;
 
 typedef PVOID (*PFN_KBDLAYERDESCRIPTOR)(VOID);
 
@@ -32,7 +32,6 @@ typedef PVOID (*PFN_KBDLAYERDESCRIPTOR)(VOID);
 /*
  * Retrieves a PKL by an input locale identifier (HKL).
  * @implemented
- * Win: HKLtoPKL
  */
 PKL FASTCALL IntHKLtoPKL(_Inout_ PTHREADINFO pti, _In_ HKL hKL)
 {
@@ -45,27 +44,27 @@ PKL FASTCALL IntHKLtoPKL(_Inout_ PTHREADINFO pti, _In_ HKL hKL)
     pKL = pFirstKL;
 
     /* hKL can have special value HKL_NEXT or HKL_PREV */
-    if (hKL == (HKL)(ULONG_PTR)HKL_NEXT) /* Looking forward */
+    if (hKL == UlongToHandle(HKL_NEXT)) /* Looking forward */
     {
         do
         {
             pKL = pKL->pklNext;
-            if (!(pKL->dwKL_Flags & KLF_UNLOAD))
+            if (!(pKL->dwKL_Flags & KL_UNLOAD))
                 return pKL;
         } while (pKL != pFirstKL);
     }
-    else if (hKL == (HKL)(ULONG_PTR)HKL_PREV) /* Looking backward */
+    else if (hKL == UlongToHandle(HKL_PREV)) /* Looking backward */
     {
         do
         {
             pKL = pKL->pklPrev;
-            if (!(pKL->dwKL_Flags & KLF_UNLOAD))
+            if (!(pKL->dwKL_Flags & KL_UNLOAD))
                 return pKL;
         } while (pKL != pFirstKL);
     }
     else if (HIWORD(hKL)) /* hKL is a full input locale identifier */
     {
-        /* No KLF_UNLOAD check */
+        /* No KL_UNLOAD check */
         do
         {
             if (pKL->hkl == hKL)
@@ -76,7 +75,7 @@ PKL FASTCALL IntHKLtoPKL(_Inout_ PTHREADINFO pti, _In_ HKL hKL)
     }
     else  /* Language only specified */
     {
-        /* No KLF_UNLOAD check */
+        /* No KL_UNLOAD check */
         do
         {
             if (LOWORD(pKL->hkl) == LOWORD(hKL)) /* Low word is language ID */
@@ -92,7 +91,6 @@ PKL FASTCALL IntHKLtoPKL(_Inout_ PTHREADINFO pti, _In_ HKL hKL)
 /*
  * A helper function for NtUserGetKeyboardLayoutList.
  * @implemented
- * Win: _GetKeyboardLayoutList
  */
 static UINT APIENTRY
 IntGetKeyboardLayoutList(
@@ -114,7 +112,7 @@ IntGetKeyboardLayoutList(
         /* Count the effective PKLs */
         do
         {
-            if (!(pKL->dwKL_Flags & KLF_UNLOAD))
+            if (!(pKL->dwKL_Flags & KL_UNLOAD))
                 ++ret;
             pKL = pKL->pklNext;
         } while (pKL != pFirstKL);
@@ -124,7 +122,7 @@ IntGetKeyboardLayoutList(
         /* Copy the effective HKLs to pHklBuff */
         do
         {
-            if (!(pKL->dwKL_Flags & KLF_UNLOAD))
+            if (!(pKL->dwKL_Flags & KL_UNLOAD))
             {
                 *pHklBuff = pKL->hkl;
                 ++pHklBuff;
@@ -362,19 +360,19 @@ cleanup:
     {
         /* We have failed - destroy created object */
         if (pkf)
-            UserDeleteObject(pkf->head.h, TYPE_KBDFILE);
+            UserDeleteObject(UserHMGetHandle(pkf), TYPE_KBDFILE);
     }
 
     return pRet;
 }
 
 /*
- * UserLoadKbdLayout
+ * co_UserLoadKbdLayout
  *
  * Loads keyboard layout and creates KL object
  */
 static PKL
-UserLoadKbdLayout(PUNICODE_STRING pustrKLID, HKL hKL)
+co_UserLoadKbdLayout(PUNICODE_STRING pustrKLID, HKL hKL)
 {
     LCID lCid;
     CHARSETINFO cs;
@@ -398,7 +396,7 @@ UserLoadKbdLayout(PUNICODE_STRING pustrKLID, HKL hKL)
     if (!pKl->spkf)
     {
         ERR("UserLoadKbdFile(%wZ) failed!\n", pustrKLID);
-        UserDeleteObject(pKl->head.h, TYPE_KBDLAYOUT);
+        UserDeleteObject(UserHMGetHandle(pKl), TYPE_KBDLAYOUT);
         return NULL;
     }
 
@@ -406,7 +404,7 @@ UserLoadKbdLayout(PUNICODE_STRING pustrKLID, HKL hKL)
     if (!NT_SUCCESS(RtlUnicodeStringToInteger(pustrKLID, 16, (PULONG)&lCid)))
     {
         ERR("RtlUnicodeStringToInteger failed for '%wZ'\n", pustrKLID);
-        UserDeleteObject(pKl->head.h, TYPE_KBDLAYOUT);
+        UserDeleteObject(UserHMGetHandle(pKl), TYPE_KBDLAYOUT);
         return NULL;
     }
 
@@ -461,7 +459,7 @@ UnloadKbdFile(_In_ PKBDFILE pkf)
         *ppkfLink = pkf->pkfNext;
 
     EngUnloadImage(pkf->hBase);
-    UserDeleteObject(pkf->head.h, TYPE_KBDFILE);
+    UserDeleteObject(UserHMGetHandle(pkf), TYPE_KBDFILE);
 }
 
 /*
@@ -489,7 +487,7 @@ UserUnloadKbl(PKL pKl)
     if (pKl->head.cLockObj > 1)
     {
         /* Layout is used by other threads */
-        pKl->dwKL_Flags |= KLF_UNLOAD;
+        pKl->dwKL_Flags |= KL_UNLOAD;
         return FALSE;
     }
 
@@ -501,7 +499,7 @@ UserUnloadKbl(PKL pKl)
     {
         ExFreePoolWithTag(pKl->piiex, USERTAG_IME);
     }
-    UserDeleteObject(pKl->head.h, TYPE_KBDLAYOUT);
+    UserDeleteObject(UserHMGetHandle(pKl), TYPE_KBDLAYOUT);
     return TRUE;
 }
 
@@ -521,7 +519,7 @@ W32kGetDefaultKeyLayout(VOID)
     /* Return not unloaded layout */
     do
     {
-        if (!(pKl->dwKL_Flags & KLF_UNLOAD))
+        if (!(pKl->dwKL_Flags & KL_UNLOAD))
             return pKl;
 
         pKl = pKl->pklPrev; /* Confirmed on Win2k */
@@ -556,7 +554,6 @@ UserHklToKbl(HKL hKl)
     return NULL;
 }
 
-// Win: ReorderKeyboardLayouts
 VOID FASTCALL
 IntReorderKeyboardLayouts(
     _Inout_ PWINSTATION_OBJECT pWinSta,
@@ -579,7 +576,7 @@ IntReorderKeyboardLayouts(
 /*
  * UserSetDefaultInputLang
  *
- * Sets default kyboard layout for system. Called from UserSystemParametersInfo.
+ * Sets default keyboard layout for system. Called from UserSystemParametersInfo.
  */
 BOOL
 NTAPI
@@ -595,42 +592,6 @@ UserSetDefaultInputLang(HKL hKl)
     return TRUE;
 }
 
-/*
- * co_UserActivateKbl
- *
- * Activates given layout in specified thread
- */
-static PKL
-co_UserActivateKbl(PTHREADINFO pti, PKL pKl, UINT Flags)
-{
-    PKL pklPrev;
-    PWND pWnd;
-
-    pklPrev = pti->KeyboardLayout;
-
-    UserAssignmentLock((PVOID*)&(pti->KeyboardLayout), pKl);
-    pti->pClientInfo->hKL = pKl->hkl;
-
-    if (Flags & KLF_SETFORPROCESS)
-    {
-        FIXME("KLF_SETFORPROCESS\n");
-    }
-
-    if (!(pWnd = pti->MessageQueue->spwndFocus))
-    {
-         pWnd = pti->MessageQueue->spwndActive;
-    }
-
-    // Send WM_INPUTLANGCHANGE to thread's focus window
-    co_IntSendMessage( pWnd ? UserHMGetHandle(pWnd) : 0,
-                      WM_INPUTLANGCHANGE,
-                      (WPARAM)pKl->iBaseCharset, // FIXME: How to set it?
-                      (LPARAM)pKl->hkl); // hkl
-
-    return pklPrev;
-}
-
-// Win: xxxImmActivateLayout
 VOID APIENTRY
 IntImmActivateLayout(
     _Inout_ PTHREADINFO pti,
@@ -651,42 +612,91 @@ IntImmActivateLayout(
         co_IntSendMessage(hImeWnd, WM_IME_SYSTEM, IMS_ACTIVATELAYOUT, (LPARAM)pKL->hkl);
         UserDerefObjectCo(pImeWnd);
     }
+    else
+    {
+        /* Remember old keyboard layout to switch back for Chinese IMEs */
+        pti->hklPrev = pti->KeyboardLayout->hkl;
+
+        if (pti->spDefaultImc)
+        {
+            /* IME Activation is needed */
+            pti->pClientInfo->CI_flags |= CI_IMMACTIVATE;
+        }
+    }
 
     UserAssignmentLock((PVOID*)&(pti->KeyboardLayout), pKL);
     pti->pClientInfo->hKL = pKL->hkl;
+    pti->pClientInfo->CodePage = pKL->CodePage;
 }
 
-/* Win: xxxInternalActivateKeyboardLayout */
+static VOID co_IntSetKeyboardLayoutForProcess(PPROCESSINFO ppi, PKL pKL)
+{
+    PTHREADINFO ptiNode, ptiNext;
+    PCLIENTINFO pClientInfo;
+    BOOL bImmMode = IS_IMM_MODE();
+
+    for (ptiNode = ppi->ptiList; ptiNode; ptiNode = ptiNext)
+    {
+        IntReferenceThreadInfo(ptiNode);
+        ptiNext = ptiNode->ptiSibling;
+
+        /* Skip this thread if its keyboard layout is already the correct one, or if it's dying */
+        if (ptiNode->KeyboardLayout == pKL || (ptiNode->TIF_flags & TIF_INCLEANUP))
+        {
+            IntDereferenceThreadInfo(ptiNode);
+            continue;
+        }
+
+        if (bImmMode)
+        {
+            IntImmActivateLayout(ptiNode, pKL);
+        }
+        else
+        {
+            UserAssignmentLock((PVOID*)&ptiNode->KeyboardLayout, pKL);
+            pClientInfo = ptiNode->pClientInfo;
+            pClientInfo->CodePage = pKL->CodePage;
+            pClientInfo->hKL = pKL->hkl;
+        }
+
+        IntDereferenceThreadInfo(ptiNode);
+    }
+}
+
 HKL APIENTRY
 co_UserActivateKeyboardLayout(
     _Inout_ PKL     pKL,
     _In_    ULONG   uFlags,
-    _Inout_ PWND    pWnd)
+    _In_opt_ PWND pWnd)
 {
     HKL hOldKL = NULL;
-    PKL pOldKL = NULL;
+    PKL pOldKL;
     PTHREADINFO pti = GetW32ThreadInfo();
     PWND pTargetWnd, pImeWnd;
     HWND hTargetWnd, hImeWnd;
     USER_REFERENCE_ENTRY Ref1, Ref2;
-    PCLIENTINFO ClientInfo = pti->pClientInfo;
+    PCLIENTINFO ClientInfo;
+    BOOL bSetForProcess = !!(uFlags & KLF_SETFORPROCESS);
 
-    if (pti->KeyboardLayout)
-    {
-        pOldKL = pti->KeyboardLayout;
-        if (pOldKL)
-            hOldKL = pOldKL->hkl;
-    }
+    IntReferenceThreadInfo(pti);
+    ClientInfo = pti->pClientInfo;
+
+    pOldKL = pti->KeyboardLayout;
+    if (pOldKL)
+        hOldKL = pOldKL->hkl;
 
     if (uFlags & KLF_RESET)
     {
         FIXME("KLF_RESET\n");
     }
 
-    if (!(uFlags & KLF_SETFORPROCESS) && pKL == pti->KeyboardLayout)
+    if (!bSetForProcess && pKL == pti->KeyboardLayout)
+    {
+        IntDereferenceThreadInfo(pti);
         return hOldKL;
+    }
 
-    pKL->wchDiacritic = 0;
+    pKL->wchDiacritic = UNICODE_NULL;
 
     if (pOldKL)
         UserRefObjectCo(pOldKL, &Ref1);
@@ -697,9 +707,9 @@ co_UserActivateKeyboardLayout(
         ClientInfo->CodePage = pKL->CodePage;
         ClientInfo->hKL = pKL->hkl;
     }
-    else if (uFlags & KLF_SETFORPROCESS)
+    else if (bSetForProcess)
     {
-        FIXME("KLF_SETFORPROCESS\n");
+        co_IntSetKeyboardLayoutForProcess(pti->ppi, pKL);
     }
     else
     {
@@ -712,10 +722,15 @@ co_UserActivateKeyboardLayout(
         ClientInfo->hKL = pKL->hkl;
     }
 
-    if (gptiForeground && (gptiForeground->ppi == pti->ppi))
+    /* Send shell message if necessary */
+    if (gptiForeground && (gptiForeground->ppi == pti->ppi) && ISITHOOKED(WH_SHELL))
     {
-        /* Send shell message */
-        co_IntShellHookNotify(HSHELL_LANGUAGE, 0, (LPARAM)pKL->hkl);
+        /* Send the HKL if needed and remember it */
+        if (ghKLSentToShell != pKL->hkl)
+        {
+            co_IntShellHookNotify(HSHELL_LANGUAGE, 0, (LPARAM)pKL->hkl);
+            ghKLSentToShell = pKL->hkl;
+        }
     }
 
     if (pti->MessageQueue)
@@ -739,18 +754,18 @@ co_UserActivateKeyboardLayout(
         }
     }
 
-    /* Send WM_IME_SYSTEM:IMS_SENDNOTIFICATION message if necessary */
-    if (pti && !(pti->TIF_flags & TIF_CSRSSTHREAD))
+    // Refresh IME UI via WM_IME_SYSTEM:IMS_SENDNOTIFICATION messaging
+    if (!(pti->TIF_flags & TIF_CSRSSTHREAD))
     {
-        if (IS_IME_HKL(pKL->hkl) || IS_CICERO_MODE())
+        if (IS_IME_HKL(pKL->hkl) || (IS_CICERO_MODE() && !IS_16BIT_MODE()))
         {
             pImeWnd = pti->spwndDefaultIme;
             if (pImeWnd)
             {
+                bSetForProcess &= !IS_16BIT_MODE();
                 UserRefObjectCo(pImeWnd, &Ref2);
-                BOOL bProcess = !!(pti->TIF_flags & KLF_SETFORPROCESS);
                 hImeWnd = UserHMGetHandle(pImeWnd);
-                co_IntSendMessage(hImeWnd, WM_IME_SYSTEM, IMS_SENDNOTIFICATION, bProcess);
+                co_IntSendMessage(hImeWnd, WM_IME_SYSTEM, IMS_SENDNOTIFICATION, bSetForProcess);
                 UserDerefObjectCo(pImeWnd);
             }
         }
@@ -758,16 +773,17 @@ co_UserActivateKeyboardLayout(
 
     if (pOldKL)
         UserDerefObjectCo(pOldKL);
+
+    IntDereferenceThreadInfo(pti);
     return hOldKL;
 }
 
-/* Win: xxxActivateKeyboardLayout */
 HKL APIENTRY
 co_IntActivateKeyboardLayout(
     _Inout_ PWINSTATION_OBJECT pWinSta,
     _In_ HKL hKL,
     _In_ ULONG uFlags,
-    _Inout_ PWND pWnd)
+    _In_opt_ PWND pWnd)
 {
     PKL pKL;
     PTHREADINFO pti = PsGetCurrentThreadWin32Thread();
@@ -785,7 +801,6 @@ co_IntActivateKeyboardLayout(
     return co_UserActivateKeyboardLayout(pKL, uFlags, pWnd);
 }
 
-// Win: xxxInternalUnloadKeyboardLayout
 static BOOL APIENTRY
 co_IntUnloadKeyboardLayoutEx(
     _Inout_ PWINSTATION_OBJECT pWinSta,
@@ -796,18 +811,18 @@ co_IntUnloadKeyboardLayoutEx(
     USER_REFERENCE_ENTRY Ref1, Ref2;
     PTHREADINFO pti = gptiCurrent;
 
-    if (pKL == gspklBaseLayout && !(dwFlags & 0x80000000))
+    if (pKL == gspklBaseLayout && !(dwFlags & UKL_NOACTIVATENEXT))
         return FALSE;
 
     UserRefObjectCo(pKL, &Ref1); /* Add reference */
 
     /* Regard as unloaded */
     UserMarkObjectDestroy(pKL);
-    pKL->dwKL_Flags |= KLF_UNLOAD;
+    pKL->dwKL_Flags |= KL_UNLOAD;
 
-    if (!(dwFlags & 0x80000000) && pti->KeyboardLayout == pKL)
+    if (!(dwFlags & UKL_NOACTIVATENEXT) && pti->KeyboardLayout == pKL)
     {
-        pNextKL = IntHKLtoPKL(pti, (HKL)(ULONG_PTR)HKL_NEXT);
+        pNextKL = IntHKLtoPKL(pti, UlongToHandle(HKL_NEXT));
         if (pNextKL)
         {
             UserRefObjectCo(pNextKL, &Ref2); /* Add reference */
@@ -824,16 +839,15 @@ co_IntUnloadKeyboardLayoutEx(
 
     UserDerefObjectCo(pKL); /* Release reference */
 
-    if (pti->pDeskInfo->fsHooks)
+    if (ISITHOOKED(WH_SHELL))
     {
         co_IntShellHookNotify(HSHELL_LANGUAGE, 0, 0);
-        gLCIDSentToShell = 0;
+        ghKLSentToShell = NULL;
     }
 
     return TRUE;
 }
 
-// Win: xxxUnloadKeyboardLayout
 static BOOL APIENTRY
 IntUnloadKeyboardLayout(_Inout_ PWINSTATION_OBJECT pWinSta, _In_ HKL hKL)
 {
@@ -844,6 +858,130 @@ IntUnloadKeyboardLayout(_Inout_ PWINSTATION_OBJECT pWinSta, _In_ HKL hKL)
         return FALSE;
     }
     return co_IntUnloadKeyboardLayoutEx(pWinSta, pKL, 0);
+}
+
+/// Invokes imm32!ImmLoadLayout and returns PIMEINFOEX
+PIMEINFOEX FASTCALL co_UserImmLoadLayout(_In_ HKL hKL)
+{
+    PIMEINFOEX piiex;
+
+    if (!IS_IME_HKL(hKL) && !IS_CICERO_MODE())
+        return NULL;
+
+    piiex = ExAllocatePoolWithTag(PagedPool, sizeof(IMEINFOEX), USERTAG_IME);
+    if (!piiex)
+        return NULL;
+
+    if (!co_ClientImmLoadLayout(hKL, piiex))
+    {
+        ExFreePoolWithTag(piiex, USERTAG_IME);
+        return NULL;
+    }
+
+    return piiex;
+}
+
+HKL APIENTRY
+co_IntLoadKeyboardLayoutEx(
+    IN OUT PWINSTATION_OBJECT pWinSta,
+    IN HANDLE hSafeFile,
+    IN HKL hOldKL,
+    IN PUNICODE_STRING puszSafeKLID,
+    IN HKL hNewKL,
+    IN UINT Flags)
+{
+    PKL pOldKL, pNewKL;
+
+    UNREFERENCED_PARAMETER(hSafeFile);
+
+    if (hNewKL == NULL || (pWinSta->Flags & WSS_NOIO))
+        return NULL;
+
+    /* If hOldKL is specified, unload it and load new layput as default */
+    if (hOldKL && hOldKL != hNewKL)
+    {
+        pOldKL = UserHklToKbl(hOldKL);
+        if (pOldKL)
+            UserUnloadKbl(pOldKL);
+    }
+
+    /* FIXME: It seems KLF_RESET is only supported for WINLOGON */
+
+    /* Let's see if layout was already loaded. */
+    pNewKL = UserHklToKbl(hNewKL);
+    if (!pNewKL)
+    {
+        /* It wasn't, so load it. */
+        pNewKL = co_UserLoadKbdLayout(puszSafeKLID, hNewKL);
+        if (!pNewKL)
+            return NULL;
+
+        if (gspklBaseLayout)
+        {
+            /* Find last not unloaded layout */
+            PKL pLastKL = gspklBaseLayout->pklPrev;
+            while (pLastKL != gspklBaseLayout && (pLastKL->dwKL_Flags & KL_UNLOAD))
+                pLastKL = pLastKL->pklPrev;
+
+            /* Add new layout to the list */
+            pNewKL->pklNext = pLastKL->pklNext;
+            pNewKL->pklPrev = pLastKL;
+            pNewKL->pklNext->pklPrev = pNewKL;
+            pNewKL->pklPrev->pklNext = pNewKL;
+        }
+        else
+        {
+            /* This is the first layout */
+            pNewKL->pklNext = pNewKL;
+            pNewKL->pklPrev = pNewKL;
+            gspklBaseLayout = pNewKL;
+        }
+
+        pNewKL->piiex = co_UserImmLoadLayout(hNewKL);
+    }
+
+    /* If this layout was prepared to unload, undo it */
+    pNewKL->dwKL_Flags &= ~KL_UNLOAD;
+
+    /* Reorder if necessary */
+    if (Flags & KLF_REORDER)
+        IntReorderKeyboardLayouts(pWinSta, pNewKL);
+
+    /* Activate this layout in current thread */
+    if (Flags & KLF_ACTIVATE)
+        co_UserActivateKeyboardLayout(pNewKL, Flags, NULL);
+
+    /* Send shell message */
+    if (!(Flags & KLF_NOTELLSHELL))
+        co_IntShellHookNotify(HSHELL_LANGUAGE, 0, (LPARAM)hNewKL);
+
+    /* FIXME: KLF_REPLACELANG */
+
+    return hNewKL;
+}
+
+HANDLE FASTCALL IntVerifyKeyboardFileHandle(HANDLE hFile)
+{
+    PFILE_OBJECT FileObject;
+    NTSTATUS Status;
+
+    if (hFile == INVALID_HANDLE_VALUE)
+        return NULL;
+
+    Status = ObReferenceObjectByHandle(hFile, FILE_READ_DATA, NULL, UserMode,
+                                       (PVOID*)&FileObject, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ERR("0x%08X\n", Status);
+        return NULL;
+    }
+
+    /* FIXME: Is the file in the system directory? */
+
+    if (FileObject)
+        ObDereferenceObject(FileObject);
+
+    return hFile;
 }
 
 /* EXPORTS *******************************************************************/
@@ -977,7 +1115,7 @@ NtUserGetKeyboardLayoutName(
 
         if (IS_IME_HKL(pKl->hkl))
         {
-            Status = RtlIntegerToUnicodeString((ULONG)(ULONG_PTR)pKl->hkl, 16, &ustrNameSafe);
+            Status = RtlIntegerToUnicodeString(HandleToUlong(pKl->hkl), 16, &ustrNameSafe);
         }
         else
         {
@@ -1009,50 +1147,34 @@ cleanup:
     return bRet;
 }
 
-/* Win: xxxImmLoadLayout */
-PIMEINFOEX FASTCALL co_UserImmLoadLayout(_In_ HKL hKL)
-{
-    PIMEINFOEX piiex;
-
-    if (!IS_IME_HKL(hKL) && !IS_CICERO_MODE())
-        return NULL;
-
-    piiex = ExAllocatePoolWithTag(PagedPool, sizeof(IMEINFOEX), USERTAG_IME);
-    if (!piiex)
-        return NULL;
-
-    if (!co_ClientImmLoadLayout(hKL, piiex))
-    {
-        ExFreePoolWithTag(piiex, USERTAG_IME);
-        return NULL;
-    }
-
-    return piiex;
-}
-
 /*
  * NtUserLoadKeyboardLayoutEx
  *
  * Loads keyboard layout with given locale id
  *
- * NOTE: We adopt a different design from Microsoft's one for security reason.
- *       We don't use the 1st and 3rd parameters of NtUserLoadKeyboardLayoutEx.
+ * NOTE: We adopt a different design from Microsoft's one due to security reason.
+ *       We don't use the 3rd parameter of NtUserLoadKeyboardLayoutEx.
+ *       See https://seclists.org/fulldisclosure/2012/Jul/137
  */
 HKL
-APIENTRY
+NTAPI
 NtUserLoadKeyboardLayoutEx(
-    IN HANDLE Handle, // hFile (See downloads.securityfocus.com/vulnerabilities/exploits/43774.c)
-    IN DWORD offTable, // Offset to KbdTables
-    IN PUNICODE_STRING puszKeyboardName, // Not used?
-    IN HKL hklUnload,
-    IN PUNICODE_STRING pustrKLID,
-    IN DWORD hkl,
+    IN HANDLE hFile,
+    IN DWORD offTable,
+    IN PVOID pTables,
+    IN HKL hOldKL,
+    IN PUNICODE_STRING puszKLID,
+    IN DWORD dwNewKL,
     IN UINT Flags)
 {
-    HKL hklRet = NULL;
-    PKL pKl = NULL, pklLast;
+    HKL hRetKL;
     WCHAR Buffer[KL_NAMELENGTH];
-    UNICODE_STRING ustrSafeKLID;
+    UNICODE_STRING uszSafeKLID;
+    PWINSTATION_OBJECT pWinSta;
+    HANDLE hSafeFile;
+
+    UNREFERENCED_PARAMETER(offTable);
+    UNREFERENCED_PARAMETER(pTables);
 
     if (Flags & ~(KLF_ACTIVATE|KLF_NOTELLSHELL|KLF_REORDER|KLF_REPLACELANG|
                   KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS|KLF_UNLOADPREVIOUS|
@@ -1063,14 +1185,12 @@ NtUserLoadKeyboardLayoutEx(
         return NULL;
     }
 
-    /* FIXME: It seems KLF_RESET is only supported for WINLOGON */
-
-    RtlInitEmptyUnicodeString(&ustrSafeKLID, Buffer, sizeof(Buffer));
+    RtlInitEmptyUnicodeString(&uszSafeKLID, Buffer, sizeof(Buffer));
     _SEH2_TRY
     {
-        ProbeForRead(pustrKLID, sizeof(*pustrKLID), 1);
-        ProbeForRead(pustrKLID->Buffer, sizeof(pustrKLID->Length), 1);
-        RtlCopyUnicodeString(&ustrSafeKLID, pustrKLID);
+        ProbeForRead(puszKLID, sizeof(*puszKLID), 1);
+        ProbeForRead(puszKLID->Buffer, sizeof(puszKLID->Length), 1);
+        RtlCopyUnicodeString(&uszSafeKLID, puszKLID);
     }
     _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
     {
@@ -1081,67 +1201,19 @@ NtUserLoadKeyboardLayoutEx(
 
     UserEnterExclusive();
 
-    /* If hklUnload is specified, unload it and load new layput as default */
-    if (hklUnload && (hklUnload != UlongToHandle(hkl)))
-    {
-        pKl = UserHklToKbl(hklUnload);
-        if (pKl)
-            UserUnloadKbl(pKl);
-    }
+    hSafeFile = (hFile ? IntVerifyKeyboardFileHandle(hFile) : NULL);
+    pWinSta = IntGetProcessWindowStation(NULL);
+    hRetKL = co_IntLoadKeyboardLayoutEx(pWinSta,
+                                        hSafeFile,
+                                        hOldKL,
+                                        &uszSafeKLID,
+                                        UlongToHandle(dwNewKL),
+                                        Flags);
+    if (hSafeFile)
+        ZwClose(hSafeFile);
 
-    /* Let's see if layout was already loaded. */
-    pKl = UserHklToKbl(UlongToHandle(hkl));
-    if (!pKl)
-    {
-        /* It wasn't, so load it. */
-        pKl = UserLoadKbdLayout(&ustrSafeKLID, UlongToHandle(hkl));
-        if (!pKl)
-            goto cleanup;
-
-        if (gspklBaseLayout)
-        {
-            /* Find last not unloaded layout */
-            pklLast = gspklBaseLayout->pklPrev;
-            while (pklLast != gspklBaseLayout && pklLast->dwKL_Flags & KLF_UNLOAD)
-                pklLast = pklLast->pklPrev;
-
-            /* Add new layout to the list */
-            pKl->pklNext = pklLast->pklNext;
-            pKl->pklPrev = pklLast;
-            pKl->pklNext->pklPrev = pKl;
-            pKl->pklPrev->pklNext = pKl;
-        }
-        else
-        {
-            /* This is the first layout */
-            pKl->pklNext = pKl;
-            pKl->pklPrev = pKl;
-            gspklBaseLayout = pKl;
-        }
-
-        pKl->piiex = co_UserImmLoadLayout(UlongToHandle(hkl));
-    }
-
-    /* If this layout was prepared to unload, undo it */
-    pKl->dwKL_Flags &= ~KLF_UNLOAD;
-
-    /* Activate this layout in current thread */
-    if (Flags & KLF_ACTIVATE)
-        co_UserActivateKbl(PsGetCurrentThreadWin32Thread(), pKl, Flags);
-
-    /* Send shell message */
-    if (!(Flags & KLF_NOTELLSHELL))
-        co_IntShellHookNotify(HSHELL_LANGUAGE, 0, (LPARAM)hkl);
-
-    /* Return hkl on success */
-    hklRet = UlongToHandle(hkl);
-
-    /* FIXME: KLF_REPLACELANG
-              KLF_REORDER */
-
-cleanup:
     UserLeave();
-    return hklRet;
+    return hRetKL;
 }
 
 /*

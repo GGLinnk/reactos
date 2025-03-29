@@ -19,14 +19,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define __WINE_DEBUG_CHANNEL__
-#include <precomp.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "msvcrt.h"
 
-#include <internal/wine/msvcrt.h>
-#include <internal/wine/cppexcept.h>
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
+
+#ifdef __REACTOS__
+#define MSVCRT_atoi atoi
+#define MSVCRT_isdigit isdigit
+#define MSVCRT_sprintf sprintf
+#endif
 
 /* TODO:
  * - document a bit (grammar + functions)
@@ -34,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  */
 
 /* How data types modifiers are stored:
- * M (in the following definitions) is defined for
+ * M (in the following definitions) is defined for 
  * 'A', 'B', 'C' and 'D' as follows
  *      {<A>}:  ""
  *      {<B>}:  "const "
@@ -48,7 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
  *      in data fields:
  *              same as for arguments and also the following
  *              ?<M>x   {<M>}x
- *
+ *              
  */
 
 struct array
@@ -110,7 +116,7 @@ static void*    und_alloc(struct parsed_symbol* sym, unsigned int len)
         sym->avail_in_first = 0;
         ptr = (char*)sym->alloc_list + sizeof(void*);
     }
-    else
+    else 
     {
         if (len > sym->avail_in_first)
         {
@@ -188,7 +194,7 @@ static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
     a->elts[a->num] = und_alloc(sym, len + 1);
     assert(a->elts[a->num]);
     memcpy(a->elts[a->num], ptr, len);
-    a->elts[a->num][len] = '\0';
+    a->elts[a->num][len] = '\0'; 
     if (++a->num >= a->max) a->max = a->num;
     {
         int i;
@@ -199,8 +205,7 @@ static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
             c = '>';
             if (i < a->start) c = '-';
             else if (i >= a->num) c = '}';
-            /* This check is as useless as the unused-but-set gcc warning that we want to silence here */
-            if (c != 0) TRACE("%p\t%d%c %s\n", a, i, c, debugstr_a(a->elts[i]));
+            TRACE("%p\t%d%c %s\n", a, i, c, debugstr_a(a->elts[i]));
         }
     }
 
@@ -217,21 +222,21 @@ static char* str_array_get_ref(struct array* cref, unsigned idx)
     assert(cref);
     if (cref->start + idx >= cref->max)
     {
-        WARN("Out of bounds: %p %d + %d >= %d\n",
+        WARN("Out of bounds: %p %d + %d >= %d\n", 
               cref, cref->start, idx, cref->max);
         return NULL;
     }
-    TRACE("Returning %p[%d] => %s\n",
+    TRACE("Returning %p[%d] => %s\n", 
           cref, idx, debugstr_a(cref->elts[cref->start + idx]));
     return cref->elts[cref->start + idx];
 }
 
 /******************************************************************
  *		str_printf
- * Helper for printf type of command (only %s and %c are implemented)
+ * Helper for printf type of command (only %s and %c are implemented) 
  * while dynamically allocating the buffer
  */
-static char* str_printf(struct parsed_symbol* sym, const char* format, ...)
+static char* WINAPIV str_printf(struct parsed_symbol* sym, const char* format, ...)
 {
     va_list      args;
     unsigned int len = 1, i, sz;
@@ -341,7 +346,7 @@ static const char* get_number(struct parsed_symbol* sym)
  * Parses a list of function/method arguments, creates a string corresponding
  * to the arguments' list.
  */
-static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_term,
+static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_term, 
                       char open_char, char close_char)
 
 {
@@ -376,8 +381,8 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
      */
     if (z_term && *sym->current++ != 'Z') return NULL;
 
-    if (arg_collect.num == 0 ||
-        (arg_collect.num == 1 && !strcmp(arg_collect.elts[0], "void")))
+    if (arg_collect.num == 0 || 
+        (arg_collect.num == 1 && !strcmp(arg_collect.elts[0], "void")))        
         return str_printf(sym, "%cvoid%c", open_char, close_char);
     for (i = 1; i < arg_collect.num; i++)
     {
@@ -386,12 +391,12 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
 
     last = args_str ? args_str : arg_collect.elts[0];
     if (close_char == '>' && last[strlen(last) - 1] == '>')
-        args_str = str_printf(sym, "%c%s%s %c",
+        args_str = str_printf(sym, "%c%s%s %c", 
                               open_char, arg_collect.elts[0], args_str, close_char);
     else
-        args_str = str_printf(sym, "%c%s%s%c",
+        args_str = str_printf(sym, "%c%s%s%c", 
                               open_char, arg_collect.elts[0], args_str, close_char);
-
+    
     return args_str;
 }
 
@@ -730,7 +735,7 @@ static BOOL get_calling_convention(char ch, const char** call_conv,
 static const char* get_simple_type(char c)
 {
     const char* type_string;
-
+    
     switch (c)
     {
     case 'C': type_string = "signed char"; break;
@@ -759,7 +764,7 @@ static const char* get_simple_type(char c)
 static const char* get_extended_type(char c)
 {
     const char* type_string;
-
+    
     switch (c)
     {
     case 'D': type_string = "__int8"; break;
@@ -794,7 +799,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 
     assert(ct);
     ct->left = ct->right = NULL;
-
+    
     switch (dt = *sym->current++)
     {
     case '_':
@@ -819,7 +824,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
 
             if (!(struct_name = get_class_name(sym)))
                 goto done;
-            if (!(sym->flags & UNDNAME_NO_COMPLEX_TYPE))
+            if (!(sym->flags & UNDNAME_NO_COMPLEX_TYPE)) 
             {
                 switch (dt)
                 {
@@ -880,7 +885,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                     goto done;
                 if (modifier)
                     modifier = str_printf(sym, "%s %s", modifier, ptr_modif);
-                else if(ptr_modif[0])
+                else if(ptr_modif)
                     modifier = str_printf(sym, " %s", ptr_modif);
                 if (!get_calling_convention(*sym->current++,
                             &call_conv, &exported,
@@ -908,7 +913,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 sym->current++;
 
                 if (!get_calling_convention(*sym->current++,
-                                            &call_conv, &exported,
+                                            &call_conv, &exported, 
                                             sym->flags & ~UNDNAME_NO_ALLOCATION_LANGUAGE) ||
                     !demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
                     goto done;
@@ -917,7 +922,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 if (!args) goto done;
                 sym->stack.num = mark;
 
-                ct->left  = str_printf(sym, "%s%s (%s*",
+                ct->left  = str_printf(sym, "%s%s (%s*", 
                                        sub_ct.left, sub_ct.right, call_conv);
                 ct->right = str_printf(sym, ")%s", args);
             }
@@ -1044,7 +1049,7 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             return FALSE;
     }
 done:
-
+    
     return ct->left != NULL;
 }
 
@@ -1081,7 +1086,7 @@ static BOOL handle_data(struct parsed_symbol* sym)
         case '0': access = "private: "; break;
         case '1': access = "protected: "; break;
         case '2': access = "public: "; break;
-        }
+        } 
     }
 
     if (!(sym->flags & UNDNAME_NO_MEMBER_TYPE))
@@ -1131,8 +1136,8 @@ static BOOL handle_data(struct parsed_symbol* sym)
     if (sym->flags & UNDNAME_NAME_ONLY) ct.left = ct.right = modifier = NULL;
 
     sym->result = str_printf(sym, "%s%s%s%s%s%s%s%s", access,
-                             member_type, ct.left,
-                             modifier && ct.left ? " " : NULL, modifier,
+                             member_type, ct.left, 
+                             modifier && ct.left ? " " : NULL, modifier, 
                              modifier || ct.left ? " " : NULL, name, ct.right);
     ret = TRUE;
 done:
@@ -1604,7 +1609,7 @@ char* CDECL __unDNameEx(char* buffer, const char* mangled, int buflen,
 
     TRACE("(%p,%s,%d,%p,%p,%p,%x)\n",
           buffer, debugstr_a(mangled), buflen, memget, memfree, unknown, flags);
-
+    
     /* The flags details is not documented by MS. However, it looks exactly
      * like the UNDNAME_ manifest constants from imagehlp.h and dbghelp.h
      * So, we copied those (on top of the file)
